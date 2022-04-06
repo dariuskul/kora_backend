@@ -1,0 +1,13 @@
+"use strict";
+exports.__esModule = true;
+var express_1 = require("express");
+var projects_1 = require("./projects");
+var tasks_1 = require("./tasks");
+var timers_1 = require("./timers");
+var users_1 = require("./users");
+var router = (0, express_1.Router)();
+router.use('/users', users_1["default"]);
+router.use('/projects', projects_1["default"]);
+router.use('/tasks', tasks_1["default"]);
+router.use('/timers', timers_1["default"]);
+exports["default"] = router;
