@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "tsc": "nodemon index.ts",
+    "start": "node build/index.js",
     "postinstall": "npm run tsc"
   },
   "author": "Darius Kulevičius",
