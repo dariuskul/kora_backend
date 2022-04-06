@@ -48,7 +48,7 @@ const task = new Task(
   () => {
     notifier.notify({
       title: 'My notification',
-      message: 'Hello, there!'
+      message: 'Hello, there!xx'
     });
   }
 )
