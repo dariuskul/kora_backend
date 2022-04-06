@@ -23,7 +23,7 @@ projectRouter.delete('/:id', authorize([ERoles.Admin]), async (req: Request, res
 
 projectRouter.post('/', authorize(), async (req: Request, res: Response) => {
   const payload: CreateProjectDTO = req.body;
-  const userId = (req.user as any).sub;
+  const userId = (req?.user as any)?.sub;
   try {
     const project = await projectController.create(userId, payload);
     return res.status(200).send(project);
@@ -35,7 +35,7 @@ projectRouter.post('/', authorize(), async (req: Request, res: Response) => {
 });
 
 projectRouter.get('/', authorize(), async (req: Request, res: Response) => {
-  const userId = (req.user as any).sub;
+  // const userId = (req?.user as any).sub;
   const filters: IProjectFilters = req.query;
   try {
     const projects = await projectController.getAll(userId, filters);
