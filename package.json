@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "tsc": "nodemon index.ts",
-    "start": "node build/index.js",
-    "postinstall": "npm run tsc"
+    "start": "./node_modules/.bin/ts-node index.ts"
   },
   "author": "Darius Kulevičius",
   "license": "MIT",
@@ -44,6 +43,7 @@
     "swagger-ui-express": "^4.3.0",
     "toad-scheduler": "^1.6.0",
     "ts-custom-error": "^3.2.0",
+    "ts-node": "^10.7.0",
     "typescript": "^4.5.5"
   },
   "devDependencies": {
