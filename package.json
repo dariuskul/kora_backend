@@ -61,5 +61,8 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.2.0",
     "prettier": "2.5.1"
+  },
+  "engines": {
+    "node": "15.7.0"
   }
 }
