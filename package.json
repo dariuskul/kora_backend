@@ -4,7 +4,8 @@
   "description": "Server for time management system",
   "main": "index.js",
   "scripts": {
-    "tsc": "nodemon index.ts"
+    "tsc": "nodemon index.ts",
+    "postinstall": "npm run tsc"
   },
   "author": "Darius Kulevičius",
   "license": "MIT",
