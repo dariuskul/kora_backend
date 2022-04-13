@@ -15,6 +15,9 @@ export interface UserAttributes {
   dateOfBirth: string;
   isSuspended?: boolean;
   verificationToken?: string;
+  notifyAfter?: number;
+  stopTimerAfter?: string;
+  medianOfTimers?: number;
 }
 
 export interface UserInput extends Optional<UserAttributes, 'id' | 'isSuspended'> { }
@@ -56,6 +59,15 @@ class User extends Model<UserAttributes, UserInput> {
 
   @Column
   dateOfBirth!: string;
+
+  @Column
+  notifyAfter!: number;
+
+  @Column
+  stopTimerAfter!: string;
+
+  @Column
+  medianOfTimers!: number;
 
 }
 

@@ -5,6 +5,8 @@ import { ERoles } from '../constants/user';
 import * as userController from '../controllers/user.controller';
 import { AuthenticateDTO, CreateUserDTO, UpdateUserDTO } from '../db/dto/user.dto';
 import { authorize } from '../middlewares/authorize';
+import { writeDataToEventSource } from '../services/internal/eventSource';
+import { getRealTimeData } from '../services/internal/scheduler';
 import { HttpError } from '../types/error';
 
 const userRouter = Router();
@@ -94,5 +96,26 @@ userRouter.get('/dashboard', authorize(), async (req: Request, res: Response) =>
   }
 });
 
+
+userRouter.get('/admin/dashboard', authorize([ERoles.Admin, ERoles.Moderator]), async (req: Request, res: Response) => {
+  const sendEvent = (_req: Request, res: Response) => {
+    res.writeHead(200, {
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+      'Content-Type': 'text/event-stream',
+    });
+
+    setInterval(async () => {
+      const values = await getRealTimeData();
+      writeDataToEventSource(res, JSON.stringify(values));
+    }, 1000);
+
+  };
+  if (req.headers.accept === 'text/event-stream') {
+    sendEvent(req, res);
+  } else {
+    res.json({ message: 'Ok' });
+  }
+})
 
 export default userRouter;

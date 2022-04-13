@@ -1,12 +1,15 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import swaggerJsDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { connectDb } from './db';
 import router from './routes';
+import fileUpload from 'express-fileupload';
 import nodemailer from 'nodemailer';
 import { AsyncTask, SimpleIntervalJob, Task, ToadScheduler } from 'toad-scheduler';
+import { notify } from '@heroku-cli/notifications';
+import multer from 'multer';
 const notifier = require('node-notifier');
 const scheduler = new ToadScheduler()
 
@@ -42,19 +45,46 @@ app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/api', router);
+app.use(fileUpload());
 
-const task = new Task(
-  'task',
-  () => {
-    notifier.notify({
-      title: 'My notification',
-      message: 'Hello, there!xx'
-    });
+// // const job = new SimpleIntervalJob({ seconds: 500, }, task);
+
+// scheduler.addSimpleIntervalJob(job)
+
+const SEND_INTERVAL = 2000;
+
+const writeEvent = (res: Response, sseId: string, data: string) => {
+  res.write(`id: ${sseId}\n`);
+  res.write(`data: ${data}\n\n`);
+};
+
+const sendEvent = (_req: Request, res: Response) => {
+  res.writeHead(200, {
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+    'Content-Type': 'text/event-stream',
+  });
+
+  const sseId = new Date().toDateString();
+
+  setInterval(() => {
+    writeEvent(res, sseId, JSON.stringify('haha'));
+  }, SEND_INTERVAL);
+
+  writeEvent(res, sseId, JSON.stringify('haha'));
+};
+
+app.get('/test', (req: Request, res: Response) => {
+  if (req.headers.accept === 'text/event-stream') {
+    sendEvent(req, res);
+  } else {
+    res.json({ message: 'Ok' });
   }
-)
-const job = new SimpleIntervalJob({ seconds: 500, }, task);
+});
 
-scheduler.addSimpleIntervalJob(job)
+
+//use it
+
 
 app.listen(port, () => {
   console.log(`Listening at http://localhost:${port}/`);

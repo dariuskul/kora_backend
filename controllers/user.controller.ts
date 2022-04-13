@@ -71,3 +71,13 @@ export const getDashBoardInfo = async (userId: string) => {
     }
   }
 }
+
+export const getAdminDashBoard = async () => {
+  try {
+    return await service.getAllRunningTimers();
+  } catch (error) {
+    if (error instanceof HttpError) {
+      throw error;
+    }
+  }
+}

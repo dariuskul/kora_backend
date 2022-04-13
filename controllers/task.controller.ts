@@ -40,4 +40,10 @@ export const getUserTasks = async (userId: number) => {
     }
   }
 }
-
+export const checkCsvFile = async (file: any) => {
+  try {
+    return await service.checkCsvFile(file);
+  } catch (error) {
+    throw error;
+  }
+}

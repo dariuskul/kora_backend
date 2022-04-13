@@ -8,6 +8,7 @@ export interface TimerAttributes {
   startDate: string;
   endDate: string | null;
   time: number | null;
+  forcedStop?: boolean;
 
 }
 
@@ -37,5 +38,8 @@ class Timer extends Model<TimerAttributes, TimerInput> {
 
   @Column({ allowNull: true })
   time!: number;
+
+  @Column({ allowNull: true, defaultValue: false })
+  forcedStop!: boolean;
 }
 export default Timer;

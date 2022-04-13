@@ -14,6 +14,7 @@ export interface TaskInput extends Optional<TaskAttributes, 'id'> { }
 @Table
 class Task extends Model<TaskInput, TaskInput> {
   declare addTimer: HasManyAddAssociationMixin<Timer, number>;
+  declare getTimers: HasManyGetAssociationsMixin<Timer>;
   declare addAssignee: HasManyAddAssociationMixin<User, number>;
   declare getUser: HasManyGetAssociationsMixin<Task>;
   @ForeignKey(() => Project)

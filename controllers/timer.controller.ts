@@ -1,3 +1,4 @@
+import { IUpdateTimerDTO } from '../db/dto/timer.dto';
 import * as service from '../services/timer/timer.service';
 import { HttpError } from '../types/error';
 
@@ -40,3 +41,16 @@ export const getCurrentTimer = async (userId: number) => {
     }
   }
 }
+
+// updateTimer
+export const updateTimer = async (timerId: number, payload: IUpdateTimerDTO) => {
+  try {
+    return await service.updateTimer(timerId, payload);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      throw error;
+    }
+  }
+}
+
+

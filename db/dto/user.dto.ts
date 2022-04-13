@@ -8,6 +8,7 @@ export type CreateUserDTO = {
   role: keyof typeof ERoles;
   verificationToken?: string;
   status?: string
+  notifyAfter?: number;
 };
 
 export type UpdateUserDTO = Partial<CreateUserDTO>;

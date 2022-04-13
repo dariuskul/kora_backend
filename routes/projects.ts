@@ -23,7 +23,7 @@ projectRouter.delete('/:id', authorize([ERoles.Admin]), async (req: Request, res
 
 projectRouter.post('/', authorize(), async (req: Request, res: Response) => {
   const payload: CreateProjectDTO = req.body;
-  const userId = req.user.sub;
+  const userId = (req?.user as any).sub;
   try {
     const project = await projectController.create(userId, payload);
     return res.status(200).send(project);

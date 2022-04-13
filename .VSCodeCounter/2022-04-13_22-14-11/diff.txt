@@ -1,0 +1,62 @@
+Date : 2022-04-13 22:14:11
+Directory : c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend
+Total : 25 files,  1227 codes, 27 comments, 66 blanks, all 1320 lines
+
+Languages
++------------+------------+------------+------------+------------+------------+
+| language   | files      | code       | comment    | blank      | total      |
++------------+------------+------------+------------+------------+------------+
+| JSON       |          2 |        900 |          0 |          0 |        900 |
+| TypeScript |         20 |        321 |         27 |         63 |        411 |
+| JavaScript |          3 |          6 |          0 |          3 |          9 |
++------------+------------+------------+------------+------------+------------+
+
+Directories
++-----------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                          | files      | code       | comment    | blank      | total      |
++-----------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                             |         25 |      1,227 |         27 |         66 |      1,320 |
+| controllers                                                                                   |          4 |         35 |          1 |          4 |         40 |
+| db                                                                                            |          8 |         24 |          0 |          9 |         33 |
+| db\dto                                                                                        |          5 |         11 |          0 |          5 |         16 |
+| db\models                                                                                     |          3 |         13 |          0 |          4 |         17 |
+| routes                                                                                        |          3 |         81 |          8 |         12 |        101 |
+| services                                                                                      |          5 |        138 |         21 |         30 |        189 |
+| services\internal                                                                             |          2 |         56 |          4 |         10 |         70 |
+| services\task                                                                                 |          1 |         53 |         15 |         14 |         82 |
+| services\timer                                                                                |          1 |         16 |          1 |          5 |         22 |
+| services\user                                                                                 |          1 |         13 |          1 |          1 |         15 |
+| utils                                                                                         |          1 |         11 |          0 |          1 |         12 |
++-----------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++-----------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| filename                                                                                      | language   | code       | comment    | blank      | total      |
++-----------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\controllers\index.ts             | TypeScript |          0 |          0 |         -1 |         -1 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\controllers\task.controller.ts   | TypeScript |         16 |          0 |          0 |         16 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\controllers\timer.controller.ts  | TypeScript |         10 |          1 |          4 |         15 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\controllers\user.controller.ts   | TypeScript |          9 |          0 |          1 |         10 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\db\dto\project.dto.js            | JavaScript |          2 |          0 |          1 |          3 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\db\dto\task.dto.js               | JavaScript |          2 |          0 |          1 |          3 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\db\dto\timer.dto.ts              | TypeScript |          4 |          0 |          2 |          6 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\db\dto\user.dto.js               | JavaScript |          2 |          0 |          1 |          3 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\db\dto\user.dto.ts               | TypeScript |          1 |          0 |          0 |          1 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\db\models\task.ts                | TypeScript |          1 |          0 |          0 |          1 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\db\models\timer.ts               | TypeScript |          3 |          0 |          1 |          4 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\db\models\user.ts                | TypeScript |          9 |          0 |          3 |         12 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\index.ts                         | TypeScript |         30 |         -3 |         10 |         37 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\package-lock.json                | JSON       |        885 |          0 |          0 |        885 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\package.json                     | JSON       |         15 |          0 |          0 |         15 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\routes\tasks.ts                  | TypeScript |         28 |          8 |          4 |         40 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\routes\timers.ts                 | TypeScript |         33 |          0 |          5 |         38 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\routes\users.ts                  | TypeScript |         20 |          0 |          3 |         23 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\services\internal\eventSource.ts | TypeScript |          4 |          0 |          2 |          6 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\services\internal\scheduler.ts   | TypeScript |         52 |          4 |          8 |         64 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\services\task\task.service.ts    | TypeScript |         53 |         15 |         14 |         82 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\services\timer\timer.service.ts  | TypeScript |         16 |          1 |          5 |         22 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\services\user\user.service.ts    | TypeScript |         13 |          1 |          1 |         15 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\types.d.ts                       | TypeScript |          8 |          0 |          0 |          8 |
+| c:\Users\Darius\Desktop\Projects\everhoury\everhoury_backend\utils\ReadableBuff.ts            | TypeScript |         11 |          0 |          1 |         12 |
+| Total                                                                                         |            |      1,227 |         27 |         66 |      1,320 |
++-----------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+

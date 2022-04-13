@@ -140,3 +140,18 @@ export const getUserDashBoardInfo = async (userId: string) => {
   }
 }
 
+// get all current running timers for all users
+export const getAllRunningTimers = async () => {
+  const timers = await Timer.findAll({
+    where: {
+      endDate: null
+    },
+    include: [
+      { model: Task, as: 'task', include: [{ model: Project, as: 'project' }] },
+      { model: User, as: 'user' }
+    ]
+  });
+  console.log(timers);
+  return timers;
+}
+

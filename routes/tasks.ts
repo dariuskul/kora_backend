@@ -1,4 +1,8 @@
+import { parse } from 'csv';
 import { Router, Request, Response } from 'express';
+import { Readable } from 'stream'
+import * as fs from 'fs';
+import multer from 'multer';
 import { EStatus } from '../constants/status';
 
 import * as taskController from '../controllers/task.controller';
@@ -7,6 +11,29 @@ import { authorize } from '../middlewares/authorize';
 import { HttpError } from '../types/error';
 
 const taskRouter = Router();
+
+var storage = multer.memoryStorage();
+var upload = multer({ storage: storage });
+taskRouter.post('/check', authorize(), upload.single('test'), async (req: Request, res: Response) => {
+  // const testa = req.file.buffer.toString('utf8');
+  // const test = parse(testa, (err, data) => {
+  //   // convert 2d array to 1d array
+  //   const tes1 = data.reduce((acc, cur) => {
+  //     return acc.concat(cur);
+  //   }, []);
+
+  //   console.log(tes1);
+  // });
+  try {
+    const test = await taskController.checkCsvFile(req.file);
+    return res.status(200).send(test);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(EStatus[error.status]).json({ message: error.message });
+    }
+  }
+});
+
 
 taskRouter.post('/:projectId?', authorize(), async (req: Request, res: Response) => {
   const payload: CreateTaskDTO = req.body;

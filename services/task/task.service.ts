@@ -1,8 +1,8 @@
-import sequelizeConnection from '../../db/config';
+import { parse } from 'csv/sync';
+import moment from 'moment';
 import { CreateTaskDTO } from '../../db/dto/task.dto';
 import Project from '../../db/models/project';
 import Task from '../../db/models/task';
-import Timer from '../../db/models/timer';
 import User from '../../db/models/user';
 import { HttpError } from '../../types/error';
 import { hasAccessToAllProjects } from '../../utils/user';
@@ -139,4 +139,62 @@ export const getUserTasks = async (userId: number) => {
     throw new HttpError('ServerError');
   }
 }
+
+// get task's timers and filter by day
+
+export const getTaskTimers = async (taskId: number, day: string) => {
+  if (!taskId) {
+    throw new HttpError('BadRequest', 'Provide task id');
+  }
+
+  const task = await Task.findByPk(taskId);
+
+  if (!task) {
+    throw new HttpError('NotFound', 'Task not found with that id');
+  }
+
+  const momentDay = moment(day);
+
+  try {
+    const timers = await task.getTimers();
+    const filteredTimers = timers.filter((timer) => {
+      return momentDay.diff(moment(timer.endDate), 'days') === 0;
+    });
+    return filteredTimers;
+  } catch (error) {
+    throw new HttpError('ServerError');
+  }
+}
+
+export const checkCsvFile = async (file: any) => {
+  console.log(file);
+  if (!file || !file.originalname.endsWith('.csv')) {
+    throw new HttpError('BadRequest', 'Provide csv file');
+  }
+  const fileBuffer = file.buffer.toString('utf8');
+  try {
+    const rawData = await parse(fileBuffer)
+    // flatten array
+    const data = rawData.reduce((acc, cur) => acc.concat(cur), []);
+    console.log(data);
+    return { parsedTasks: data };
+  } catch (error) {
+    throw new HttpError('BadRequest', 'Provided file is in bad format');
+  }
+}
+
+// // add tasks from csv file
+// export const addTasksFromCsv = async (csv: string) => {
+//   const tasks = csv.split('\n');
+//   tasks.forEach(async (task) => {
+//     const taskData = task.split(',');
+//     const project = await Project.findByPk(taskData[0]);
+//     if (!project) {
+//       throw new HttpError('NotFound', 'Project not found with that id');
+//     }
+//     const newTask = await Task.create({ id: taskData[1], description: taskData[2] });
+//     await project.addTask(newTask);
+//   });
+// }
+
 

@@ -1,6 +1,7 @@
 import { groupBy, toPairs } from 'lodash';
 import moment from 'moment';
 import { Op } from 'sequelize';
+import { IUpdateTimerDTO } from '../../db/dto/timer.dto';
 import Project from '../../db/models/project';
 import Task from '../../db/models/task';
 import Timer from '../../db/models/timer';
@@ -17,6 +18,23 @@ export const current = async (user: User) => {
     console.error(error);
   }
 };
+
+// update timer 
+export const updateTimer = async (timerId: number, payload: IUpdateTimerDTO) => {
+  try {
+    const timer = await Timer.findByPk(timerId);
+    if (!timer) {
+      throw new HttpError('NotFound', 'Timer not found');
+    }
+    timer.update({ forcedStop: false, ...payload })
+  } catch (error) {
+    if (error instanceof HttpError) {
+      throw error;
+    }
+  }
+
+}
+
 
 export const start = async (taskId: number, userId: number) => {
   if (!taskId) {
@@ -97,6 +115,8 @@ const getWeeklyEntries = async (userId) => {
         task: timer.task,
         startDate: timer.startDate,
         endDate: timer.endDate,
+        forced: timer.forcedStop,
+        id: timer.id,
       };
       if (projectEntry.endDate) {
         weeklyEntry.projectEntries.push(projectEntry);
@@ -118,10 +138,10 @@ const getWeeklyEntries = async (userId) => {
       });
       projectEntriesByDay.push(projectEntriesByDayObject);
     });
-    weeklyEntry.projectEntries = projectEntriesByDay;
+    weeklyEntry.projectEntries = projectEntriesByDay.reverse();
     weeklyEntries.push(weeklyEntry);
   });
-  return weeklyEntries;
+  return weeklyEntries.reverse();
 };
 
 
@@ -152,3 +172,4 @@ export const getCurrentRunningTimer = async (userId: number) => {
     throw new HttpError('ServerError');
   }
 };
+
