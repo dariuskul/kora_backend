@@ -59,6 +59,7 @@ export const getAll = async (userId: number) => {
   try {
     const user = await User.findByPk(userId);
     if (!user) {
+      console.log('Err');
       throw new HttpError('ServerError');
     }
     await synchronizeProjects(user);
@@ -66,8 +67,10 @@ export const getAll = async (userId: number) => {
     const filteredTasks = tasks.filter((task) =>
       hasAccessToAllProjects(user) ? task : task.project.users.filter((item) => item.id === user.id).length > 0
     );
+    console.log('cia');
     return filteredTasks;
   } catch (error) {
+    console.log('Err', error);
     throw new HttpError('ServerError');
   }
 };

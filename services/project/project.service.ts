@@ -70,7 +70,7 @@ export const remove = async (projectId: number) => {
 
 export const synchronizeProjects = async (user: User) => {
   const boards = await getAllBoards();
-
+  console.log('boardai', boards);
   boards.values.forEach(async (board) => {
     const {
       location: { projectId, projectName },

@@ -22,8 +22,13 @@ timerRouter.post('/start', authorize(), async (req: Request, res: Response) => {
   }
 });
 
-timerRouter.post('/stop', authorize(), async (req: Request, res: Response) => {
-  const userId: string = (req.user as any).sub;
+timerRouter.post('/stop/:userId?', authorize(), async (req: Request, res: Response) => {
+  let userId;
+  if (req.params.userId) {
+    userId = Number(req.params.userId);
+  } else {
+    userId = (req.user as any).sub;
+  }
   try {
     const timer = await timerController.stop(Number(userId));
     return res.status(200).send(timer);
