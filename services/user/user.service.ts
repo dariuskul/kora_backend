@@ -84,6 +84,7 @@ export const update = async (userId: string, payload: UpdateUserDTO) => {
   if (payload.password) {
     passwordHash = generateHash(payload.password, 15);
   }
+  console.log('payload', payload);
 
   Object.assign(user, { ...payload, passwordHash });
 
@@ -151,7 +152,6 @@ export const getAllRunningTimers = async () => {
       { model: User, as: 'user' }
     ]
   });
-  console.log(timers);
   return timers;
 }
 

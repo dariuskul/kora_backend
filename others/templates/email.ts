@@ -1,9 +1,14 @@
 import { createTransporter } from "../../utils/email";
 
-export const sendEmail = async (to: Array<string>, html: string, from = 'cidukascido@gmail.com') => {
+export const sendEmail = async (to: Array<string>, html: string, from = 'cidukascido@gmail.com', subject?: string) => {
   const transporter = createTransporter();
-
-  await transporter.sendMail({ from, to, html });
+  console.log('to', to);
+  try {
+    await transporter.sendMail({ from, to: 'dariuux@gmail.com', html, subject: subject || ''  });
+      console.log('send')
+  } catch (error) {
+    console.log('erroras')
+  }
 }
 
 

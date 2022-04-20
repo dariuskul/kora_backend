@@ -10,6 +10,7 @@ import nodemailer from 'nodemailer';
 import { AsyncTask, SimpleIntervalJob, Task, ToadScheduler } from 'toad-scheduler';
 import { notify } from '@heroku-cli/notifications';
 import multer from 'multer';
+import { sendDailySummary } from './utils/report';
 const notifier = require('node-notifier');
 const scheduler = new ToadScheduler()
 
@@ -47,43 +48,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api', router);
 app.use(fileUpload());
 
-// // const job = new SimpleIntervalJob({ seconds: 500, }, task);
 
-// scheduler.addSimpleIntervalJob(job)
-
-const SEND_INTERVAL = 2000;
-
-const writeEvent = (res: Response, sseId: string, data: string) => {
-  res.write(`id: ${sseId}\n`);
-  res.write(`data: ${data}\n\n`);
-};
-
-const sendEvent = (_req: Request, res: Response) => {
-  res.writeHead(200, {
-    'Cache-Control': 'no-cache',
-    Connection: 'keep-alive',
-    'Content-Type': 'text/event-stream',
-  });
-
-  const sseId = new Date().toDateString();
-
-  setInterval(() => {
-    writeEvent(res, sseId, JSON.stringify('haha'));
-  }, SEND_INTERVAL);
-
-  writeEvent(res, sseId, JSON.stringify('haha'));
-};
-
-app.get('/test', (req: Request, res: Response) => {
-  if (req.headers.accept === 'text/event-stream') {
-    sendEvent(req, res);
-  } else {
-    res.json({ message: 'Ok' });
-  }
-});
-
-
+const task = new AsyncTask(
+  'simple task', 
+  () => { return sendDailySummary()},
+  (err: Error) => { /* handle error here */ });
 //use it
+
+const job = new SimpleIntervalJob({ days: 1 }, task)
+scheduler.addSimpleIntervalJob(job)
 
 
 app.listen(port, () => {

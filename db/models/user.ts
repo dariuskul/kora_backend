@@ -18,6 +18,7 @@ export interface UserAttributes {
   notifyAfter?: number;
   stopTimerAfter?: string;
   medianOfTimers?: number;
+  dailySummaries?: boolean;
 }
 
 export interface UserInput extends Optional<UserAttributes, 'id' | 'isSuspended'> { }
@@ -68,6 +69,9 @@ class User extends Model<UserAttributes, UserInput> {
 
   @Column
   medianOfTimers!: number;
+
+  @Column({ defaultValue: false  })
+  dailySummaries!: boolean;
 
 }
 

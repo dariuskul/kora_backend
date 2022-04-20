@@ -9,6 +9,7 @@ export type CreateUserDTO = {
   verificationToken?: string;
   status?: string
   notifyAfter?: number;
+  dailySummaries?: boolean;
 };
 
 export type UpdateUserDTO = Partial<CreateUserDTO>;

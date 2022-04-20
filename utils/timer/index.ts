@@ -45,7 +45,7 @@ export const getLast12Months = (timers: Array<Timer>) => {
   return months.reverse();
 }
 
-const getTimeDuration = (startDate: string, endDate: string) => {
+export const getTimeDuration = (startDate: string, endDate: string) => {
   const start = moment(startDate);
   const end = moment(endDate);
   const duration = moment.duration(end.diff(start));
@@ -54,7 +54,6 @@ const getTimeDuration = (startDate: string, endDate: string) => {
 
 // convert date to time in seconds
 export const convertDateToTime = (date: string) => {
-  console.log(moment(date).format('X'))
   return moment(date).format('X');
 }
 
@@ -77,6 +76,18 @@ export const calculateMostTimeSpentOnProject = (timers: Array<Timer>) => {
   });
   // convert time to hours and minutes
   return projects.sort((a, b) => b.time - a.time);
+}
+
+export const formatToHoursAndMinutes = (time: number) => {
+  if (!time) {
+    return '00:00';
+  }
+  var dur = moment.duration(time, 'ms');
+  var hours = Math.floor(dur.asHours());
+  var mins  = Math.floor(dur.asMinutes()) - hours * 60;
+  
+  var result = `${hours  < 10 ? `0${hours}` : hours}` + ":" + `${mins < 10 ? `0${mins}` : mins}`;
+  return result;
 }
 
 

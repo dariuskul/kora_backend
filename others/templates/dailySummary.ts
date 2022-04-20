@@ -1,8 +1,13 @@
-import moment from "moment";
+import moment from 'moment';
 
-export const template = ({ data }) => {
+interface IDailySummary {
+  totalTimeTracked: string;
+  projects: any;
+}
+
+export const dailySummary = (data: IDailySummary) => {
   const today = new Date();
-return `
+  return `
   <!doctype html>
   <html>
      <head>
@@ -32,31 +37,29 @@ return `
           color: white;
         }
         .flex {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
         }
         </style>
      </head>
      <body>
-     <h1>Requested time interval: ${data.dateFrom} - ${data.dateUntil}</h1>
+     <h1>Total time spent ${data.totalTimeTracked} </h1>
      <div class="flex">
-     ${data.projects.map(item => `
-     <h1>Project: ${item.projectInfo.name}</h1>
-      <h2>Total: ${(item.projectInfo.totalProjectTime)} h</h2>
-      <table id="customers">
-      <tr>
-        <th>Task</th>
-        <th>Time spent (HH:MM)</th>
-      </tr>
-      ${item.projectInfo.tasks.map(task => `
-      <tr>
-        <td>${task.taskInfo.name}</td>
-        <td>${task.taskInfo.totalTaskTime}</td>
-      </tr>
-      `)}
-      </table>
-  `)}
+     <table id="customers">
+     <tr>
+     <th>Project</th>
+     <th>Time spent (HH:MM)</th>
+     </tr>
+     ${data.projects.map(
+       (item) => `
+     ${
+       item &&
+       `<tr>
+     <td>${item.projectInfo.name}</td>
+     <td>${item.projectInfo.totalProjectTime}</td>
+   </tr>`
+     }
+  `
+     ).join(' ')}
+  </table>
      </body>
   </html>
   `;

@@ -170,7 +170,6 @@ export const getTaskTimers = async (taskId: number, day: string) => {
 }
 
 export const checkCsvFile = async (file: any) => {
-  console.log(file);
   if (!file || !file.originalname.endsWith('.csv')) {
     throw new HttpError('BadRequest', 'Provide csv file');
   }
@@ -179,7 +178,6 @@ export const checkCsvFile = async (file: any) => {
     const rawData = await parse(fileBuffer)
     // flatten array
     const data = rawData.reduce((acc, cur) => acc.concat(cur), []);
-    console.log(data);
     return { parsedTasks: data };
   } catch (error) {
     throw new HttpError('BadRequest', 'Provided file is in bad format');
