@@ -1,5 +1,5 @@
 import * as service from '../services/task/task.service';
-import { CreateTaskDTO } from '../db/dto/task.dto';
+import { CreateTaskDTO, TaskFilters } from '../db/dto/task.dto';
 import { HttpError } from '../types/error';
 
 export const create = async (payload: CreateTaskDTO, projectId?: number) => {
@@ -40,6 +40,28 @@ export const getUserTasks = async (userId: number) => {
     }
   }
 }
+
+export const getAvailableTasks = async (userId: number, filters: TaskFilters, projectId?: number) => {
+  try {
+    return await service.getTasksByUserId(userId, filters, projectId);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      throw error;
+    }
+  }
+}
+
+export const updateTask = async (taskId: number, payload: CreateTaskDTO) => {
+  try {
+    return await service.updateTask(taskId, payload);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      throw error;
+    }
+  }
+};
+
+
 export const checkCsvFile = async (file: any) => {
   try {
     return await service.checkCsvFile(file);

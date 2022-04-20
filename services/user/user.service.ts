@@ -44,6 +44,19 @@ export const create = async (payload: CreateUserDTO) => {
   }
 };
 
+export const removeUser = async (id: number) => {
+  const user = await User.findByPk(id);
+  if (!user) {
+    throw new HttpError('NotFound');
+  }
+  try {
+    await user.destroy();
+  } catch (error) {
+    throw new HttpError('ServerError', 'Could not delete user');
+  }
+};
+
+
 export const getAll = async () => {
   try {
     const users = await User.findAll({ attributes: { exclude: ['passwordHash'] }, include: { model: Project, as: 'projects' } });
@@ -65,7 +78,7 @@ export const authenticate = async (payload: AuthenticateDTO) => {
     throw new HttpError('BadRequest', 'Provided credentials are not correct');
   }
 
-  const token = sign({ sub: user.id }, AUTH.JWT, { expiresIn: '2h' });
+  const token = sign({ sub: user.id, role: user.role }, AUTH.JWT, { expiresIn: '2h' });
 
   return { ...omitHash(user.get()), token };
 };

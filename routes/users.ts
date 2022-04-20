@@ -96,6 +96,24 @@ userRouter.get('/dashboard', authorize(), async (req: Request, res: Response) =>
   }
 });
 
+userRouter.delete('/:id', authorize(), async (req: Request, res: Response) => {
+  const userId: string = (req.user as any).sub;
+  const { id } = req.params;
+  console.log((req.user as any))
+  if (userId !== id && (req.user as any).role !== ERoles.Admin) {
+    return res.sendStatus(403);
+  }
+  try {
+    await userController.removeUser(Number(id));
+    return res.sendStatus(204);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(EStatus[error.status]).json({ message: error.message });
+    }
+  }
+});
+
+
 
 userRouter.get('/admin/dashboard', authorize([ERoles.Admin, ERoles.Moderator]), async (req: Request, res: Response) => {
   const sendEvent = (_req: Request, res: Response) => {

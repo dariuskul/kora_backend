@@ -6,7 +6,7 @@ import multer from 'multer';
 import { EStatus } from '../constants/status';
 
 import * as taskController from '../controllers/task.controller';
-import { CreateTaskDTO } from '../db/dto/task.dto';
+import { CreateTaskDTO, TaskFilters } from '../db/dto/task.dto';
 import { authorize } from '../middlewares/authorize';
 import { HttpError } from '../types/error';
 
@@ -34,6 +34,18 @@ taskRouter.post('/check', authorize(), upload.single('test'), async (req: Reques
   }
 });
 
+taskRouter.patch('/:taskId', authorize(), async (req: Request, res: Response) => {
+  const taskId: string = req.params.taskId;
+  const updateTask: CreateTaskDTO = req.body;
+  try {
+    const result = await taskController.updateTask(Number(taskId), updateTask);
+    return res.status(200).send(result);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(EStatus[error.status]).json({ message: error.message });
+    }
+  }
+});
 
 taskRouter.post('/:projectId?', authorize(), async (req: Request, res: Response) => {
   const payload: CreateTaskDTO = req.body;
@@ -59,6 +71,21 @@ taskRouter.get('/', authorize(), async (req: Request, res: Response) => {
     }
   }
 });
+
+taskRouter.get('/available-tasks/:projectId?', authorize(), async (req: Request, res: Response) => {
+  const userId = (req.user as any).sub;
+  const projectId = Number(req.params.projectId);
+  const filters: any = req.query;
+  console.log('asdas', filters);
+  try {
+    const tasks = await taskController.getAvailableTasks(userId, filters, projectId);
+    return res.status(200).send(tasks);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(EStatus[error.status]).json({ message: error.message });
+    }
+  }
+})
 
 taskRouter.get('/:projectId', authorize(), async (req: Request, res: Response) => {
   const projectId: number = Number(req.params.projectId);

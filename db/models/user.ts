@@ -1,4 +1,4 @@
-import { DataTypes, HasManyAddAssociationMixin, HasManyGetAssociationsMixin, HasManySetAssociationsMixin, Optional } from 'sequelize';
+import { DataTypes, HasManyAddAssociationMixin, HasManyGetAssociationsMixin, HasManyRemoveAssociationMixin, HasManySetAssociationsMixin, Optional } from 'sequelize';
 import { BelongsToMany, Column, HasMany, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import sequelizeConnection from '../config';
 import Project from './project';
@@ -28,6 +28,7 @@ class User extends Model<UserAttributes, UserInput> {
   declare getTimers: HasManyGetAssociationsMixin<Timer>;
   declare addTimer: HasManyAddAssociationMixin<Timer, number>;
   declare addTask: HasManyAddAssociationMixin<Task, number>;
+  declare removeTask: HasManyRemoveAssociationMixin<User, number>;
   @BelongsToMany(() => Project, () => UserProject)
   projects!: Array<Project>;
 
@@ -70,7 +71,7 @@ class User extends Model<UserAttributes, UserInput> {
   @Column
   medianOfTimers!: number;
 
-  @Column({ defaultValue: false  })
+  @Column({ defaultValue: false })
   dailySummaries!: boolean;
 
 }

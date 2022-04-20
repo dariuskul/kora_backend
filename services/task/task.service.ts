@@ -1,6 +1,6 @@
 import { parse } from 'csv/sync';
 import moment from 'moment';
-import { CreateTaskDTO } from '../../db/dto/task.dto';
+import { CreateTaskDTO, TaskFilters } from '../../db/dto/task.dto';
 import Project from '../../db/models/project';
 import Task from '../../db/models/task';
 import User from '../../db/models/user';
@@ -115,10 +115,10 @@ export const asignTaskToUser = async (taskId: number, userId: number) => {
     await user.addTask(task);
     return task;
   } catch (error) {
-    console.log(error)
+    console.log(error);
     throw new HttpError('ServerError');
   }
-}
+};
 
 export const getUserTasks = async (userId: number) => {
   if (!userId) {
@@ -136,12 +136,125 @@ export const getUserTasks = async (userId: number) => {
     const accessableTasks = tasks.filter((task) =>
       hasAccessToAllProjects(user) ? task : task.project.users.filter((item) => item.id === user.id).length > 0
     );
-    const assignedTasks = accessableTasks.filter(task => task.assigneeId === userId);
+    const assignedTasks = accessableTasks.filter((task) => task.assigneeId === userId);
     return assignedTasks;
   } catch (error) {
     throw new HttpError('ServerError');
   }
-}
+};
+
+// get all tasks from projects that user has access to
+export const getTasksByUserId = async (userId: number, filters: TaskFilters, projectId?: number) => {
+  if (!userId) {
+    throw new HttpError('BadRequest', 'Provide user id');
+  }
+  console.log('fil', filters);
+
+  const user = await User.findByPk(userId);
+
+  if (!user) {
+    throw new HttpError('NotFound', 'User not found with that id');
+  }
+
+  try {
+    const tasks = await Task.findAll({
+      include: [
+        { model: Project, include: [{ model: User }] },
+        { model: User, as: 'assignee', attributes: ['fullName', 'id'] },
+      ],
+    });
+    const accessableTasks = tasks.filter((task) =>
+      hasAccessToAllProjects(user) ? task : task.project.users.filter((item) => item.id === user.id).length > 0
+    );
+    // if project id is provided, filter tasks by project id
+    if (projectId) {
+      const project = await Project.findByPk(projectId);
+      if (!project) {
+        throw new HttpError('NotFound', 'Project not found with that id');
+      }
+      const projectTasks = accessableTasks.filter((task) => task.projectId === projectId);
+      return projectTasks;
+    }
+    // if filters are provided, filter tasks by filters
+    if (filters) {
+      const { projectId, assigneeId } = filters;
+      const filteredTasks = accessableTasks.filter((task) => {
+        if (projectId === 'All' || assigneeId === 'All') {
+          return true;
+        }
+        if (projectId && task.projectId !== projectId) {
+          return false;
+        }
+        if (projectId && task.assigneeId !== assigneeId) {
+          return false;
+        }
+        return false;
+      });
+      return filteredTasks;
+    }
+    return accessableTasks;
+  } catch (error) {
+    throw new HttpError('ServerError');
+  }
+};
+
+export const getTaskById = async (taskId: number) => {
+  if (!taskId) {
+    throw new HttpError('BadRequest', 'Provide task id');
+  }
+
+  const task = await Task.findByPk(taskId);
+
+  if (!task) {
+    throw new HttpError('NotFound', 'Task not found with that id');
+  }
+
+  try {
+    return task;
+  } catch (error) {
+    throw new HttpError('ServerError');
+  }
+};
+
+export const updateTask = async (taskId: number, payload: CreateTaskDTO) => {
+  if (!taskId) {
+    throw new HttpError('BadRequest', 'Provide task id');
+  }
+
+  const task = await Task.findByPk(taskId);
+
+  if (!task) {
+    throw new HttpError('NotFound', 'Task not found with that id');
+  }
+
+  try {
+    if (payload.description) {
+      await task.update(payload);
+    }
+    if (payload.assigneeId) {
+      let user;
+      if (payload.assigneeId !== -1) {
+        user = await User.findByPk(payload.assigneeId);
+      }
+      if (task.assignee || task.assigneeId) {
+        console.log('cia1');
+        const oldAssignee = await User.findByPk(task.assigneeId);
+        if (!oldAssignee) {
+          throw new HttpError('NotFound', 'User not found with that id');
+        }
+        console.log('cia');
+        await oldAssignee.removeTask(task.id);
+      }
+      if (payload.assigneeId !== -1 && user) {
+        await user.addTask(taskId);
+      }
+    }
+    return task;
+  } catch (error) {
+    console.log(error);
+    throw new HttpError('ServerError');
+  }
+};
 
 // get task's timers and filter by day
 
@@ -167,7 +280,7 @@ export const getTaskTimers = async (taskId: number, day: string) => {
   } catch (error) {
     throw new HttpError('ServerError');
   }
-}
+};
 
 export const checkCsvFile = async (file: any) => {
   if (!file || !file.originalname.endsWith('.csv')) {
@@ -175,27 +288,11 @@ export const checkCsvFile = async (file: any) => {
   }
   const fileBuffer = file.buffer.toString('utf8');
   try {
-    const rawData = await parse(fileBuffer)
+    const rawData = await parse(fileBuffer);
     // flatten array
     const data = rawData.reduce((acc, cur) => acc.concat(cur), []);
     return { parsedTasks: data };
   } catch (error) {
     throw new HttpError('BadRequest', 'Provided file is in bad format');
   }
-}
-
-// // add tasks from csv file
-// export const addTasksFromCsv = async (csv: string) => {
-//   const tasks = csv.split('\n');
-//   tasks.forEach(async (task) => {
-//     const taskData = task.split(',');
-//     const project = await Project.findByPk(taskData[0]);
-//     if (!project) {
-//       throw new HttpError('NotFound', 'Project not found with that id');
-//     }
-//     const newTask = await Task.create({ id: taskData[1], description: taskData[2] });
-//     await project.addTask(newTask);
-//   });
-// }
-
-
+};

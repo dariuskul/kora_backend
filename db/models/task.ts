@@ -1,4 +1,4 @@
-import { HasManyAddAssociationMixin, HasManyGetAssociationsMixin, Optional } from 'sequelize';
+import { HasManyAddAssociationMixin, HasManyGetAssociationsMixin, HasManyRemoveAssociationMixin, Optional } from 'sequelize';
 import { Table, Model, BelongsTo, HasMany, ForeignKey, Column } from 'sequelize-typescript'
 import Project from './project';
 import Timer from './timer';
@@ -16,6 +16,7 @@ class Task extends Model<TaskInput, TaskInput> {
   declare addTimer: HasManyAddAssociationMixin<Timer, number>;
   declare getTimers: HasManyGetAssociationsMixin<Timer>;
   declare addAssignee: HasManyAddAssociationMixin<User, number>;
+  declare removeAssignee: HasManyRemoveAssociationMixin<User, number>;
   declare getUser: HasManyGetAssociationsMixin<Task>;
   @ForeignKey(() => Project)
   @Column

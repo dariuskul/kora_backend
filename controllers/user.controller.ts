@@ -72,6 +72,17 @@ export const getDashBoardInfo = async (userId: string) => {
   }
 }
 
+export const removeUser = async (id: number) => {
+  try {
+    return await service.removeUser(id);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      throw error;
+    }
+  }
+}
+
+
 export const getAdminDashBoard = async () => {
   try {
     return await service.getAllRunningTimers();
