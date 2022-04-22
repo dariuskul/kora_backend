@@ -8,7 +8,7 @@ import Project from '../../db/models/project';
 import Task from '../../db/models/task';
 import Timer from '../../db/models/timer';
 import User, { UserInput } from '../../db/models/user';
-import { sendVerificationEmail } from '../../others/templates/email';
+import { sendEmailRestorationEmail, sendVerificationEmail } from '../../others/templates/email';
 import { HttpError } from '../../types/error';
 import { compareHash, generateHash, generateRandomToken, omitHash } from '../../utils/auth';
 import { calculateMostTimeSpentOnProject, formatTopTimers, getLast12Months } from '../../utils/timer';
@@ -97,7 +97,6 @@ export const update = async (userId: string, payload: UpdateUserDTO) => {
   if (payload.password) {
     passwordHash = generateHash(payload.password, 15);
   }
-  console.log('payload', payload);
 
   Object.assign(user, { ...payload, passwordHash });
 
@@ -149,7 +148,6 @@ export const getUserDashBoardInfo = async (userId: string) => {
     const topProjects = calculateMostTimeSpentOnProject(usersTimers);
     return { last6Months: getLast6Months, topProjects };
   } catch (error) {
-    console.log('error', error);
     throw new HttpError('ServerError');
   }
 }
@@ -166,5 +164,37 @@ export const getAllRunningTimers = async () => {
     ]
   });
   return timers;
+}
+
+export const resetPassword = async (email: string, password: string) => {
+  const user = await User.findOne({ where: { email } });
+
+  if (!user) {
+    throw new HttpError('BadRequest', 'User not found');
+  }
+
+  let passwordHash = generateHash(password, 15);
+
+  Object.assign(user, { passwordHash });
+  // update user password
+  await user.save();
+
+  return user;
+}
+
+export const senddPasswordRestoreLink = async (email: string) => {
+  const user = await User.findOne({ where: { email } });
+
+  if (!user) {
+    throw new HttpError('BadRequest', 'User not found');
+  }
+
+  const token = generateRandomToken();
+
+  await User.update({ verificationToken: token }, { where: { email } });
+
+  await sendEmailRestorationEmail(email, token);
+
+  return user;
 }
 

@@ -96,10 +96,21 @@ userRouter.get('/dashboard', authorize(), async (req: Request, res: Response) =>
   }
 });
 
+userRouter.post('/restore-password', async (req: Request, res: Response) => {
+  const email: string = req.body.email;
+  try {
+    const dashboard = await userController.sendPasswordRemindLink(email);
+    return res.status(200).send(dashboard);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(EStatus[error.status]).json({ message: error.message });
+    }
+  }
+});
+
 userRouter.delete('/:id', authorize(), async (req: Request, res: Response) => {
   const userId: string = (req.user as any).sub;
   const { id } = req.params;
-  console.log((req.user as any))
   if (userId !== id && (req.user as any).role !== ERoles.Admin) {
     return res.sendStatus(403);
   }
@@ -135,5 +146,19 @@ userRouter.get('/admin/dashboard', authorize([ERoles.Admin, ERoles.Moderator]), 
     res.json({ message: 'Ok' });
   }
 })
+
+userRouter.post('/reset-password', async (req: Request, res: Response) => {
+  const email: string = req.body.email;
+  const password: string = req.body.password;
+  try {
+    await userController.restorePassword(email, password);
+    return res.sendStatus(200);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(EStatus[error.status]).json({ message: error.message });
+    }
+  }
+});
+
 
 export default userRouter;

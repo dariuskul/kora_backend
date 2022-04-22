@@ -4,19 +4,6 @@ import Project from "../../db/models/project";
 import Task from "../../db/models/task";
 import Timer from "../../db/models/timer"
 import User from "../../db/models/user";
-const INTERVAL = 10;
-// export const stopTimer = async () => {
-//   const timers = await Timer.findAll();
-//   if (!timers) return;
-
-//   timers.map(timer => {
-//     if (!timer.endDate && (Number(Date.now()) - Number(new Date(timer.startDate)) > 5000)) {
-//       timer.update({ endDate: new Date().toISOString() });
-//       console.log('stopped');
-//     }
-//   })
-// }
-
 
 // return whether difference between now and date is greater than 5 seconds or not using moment.js library
 export const isGreater = (date: string) => {

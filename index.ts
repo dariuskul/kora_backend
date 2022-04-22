@@ -53,7 +53,6 @@ const task = new AsyncTask(
   'simple task', 
   () => { return sendDailySummary()},
   (err: Error) => { /* handle error here */ });
-//use it
 
 const job = new SimpleIntervalJob({ days: 1 }, task)
 scheduler.addSimpleIntervalJob(job)

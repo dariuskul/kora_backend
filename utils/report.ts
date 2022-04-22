@@ -81,7 +81,6 @@ export const sendDailySummary = async () => {
                 const totalTimeTracked = formatToHoursAndMinutes( await getTotalTimeTrackedToday(item));
                 const projects = await getProjectsAndTotalTimeTrackedToday(item);
                 await sendEmail([item.email], dailySummary({ totalTimeTracked, projects }), 'dailySummary', 'Kora daily summary');
-                console.log('send')
             } catch (error) {
                 console.log('error', error);
             }

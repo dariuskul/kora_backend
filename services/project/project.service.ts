@@ -9,6 +9,7 @@ import User from '../../db/models/user';
 import { HttpError } from '../../types/error';
 import { checkIfCanAddWithoutRestrictions, compareProjects } from '../../utils/jira';
 import { checkStatus, isUserAlreadyAdded } from '../../utils/projects';
+import { calculateAverageTimeSpentOnProject, calculateAverageTimeSpentOnProjectByUser, calculateLongestTasksOnProject, calculateTimeSpentOnProject } from '../../utils/timer';
 import { hasAccessToAllProjects } from '../../utils/user';
 import { getAllBoards, getIssues } from '../integrations/jira/jira.service';
 import { synchronizeTasks } from '../task/task.service';
@@ -70,7 +71,6 @@ export const remove = async (projectId: number) => {
 
 export const synchronizeProjects = async (user: User) => {
   const boards = await getAllBoards();
-  console.log('boardai', boards);
   boards.values.forEach(async (board) => {
     const {
       location: { projectId, projectName },
@@ -103,10 +103,10 @@ export const getAll = async (userId: number, filters: IProjectFilters) => {
         { model: Task, include: [{ model: Timer }] },
       ],
     });
-    const filteredProjects = allProjects.filter((project) =>
-      (hasAccessToAllProjects(user)
-        ? project
-        : !project.users.filter((projectUser) => projectUser.id === user.id)) && checkStatus(project, filters)
+    const filteredProjects = allProjects.filter(
+      (project) =>
+        (hasAccessToAllProjects(user) ? project : !project.users.filter((projectUser) => projectUser.id === user.id)) &&
+        checkStatus(project, filters)
     );
     return filteredProjects;
   } catch (error) {
@@ -148,6 +148,35 @@ export const update = async (projectId: number, payload: UpdateProjectDTO) => {
     });
     return updatedProject;
   } catch (error) {
+    throw new HttpError('ServerError');
+  }
+};
+
+export const getProjectStatisctics = async (projectId: number) => {
+  try {
+    if (!projectId) throw new HttpError('BadRequest', 'Provide project id');
+
+    const project = await Project.findByPk(projectId, {
+      include: [{ model: Task, include: [{ model: Timer, include: [{ model: Task }, { model: User }] }] }],
+    });
+
+    if (!project) {
+      throw new HttpError('NotFound', 'Project not found');
+    }
+    const allTasks = await Task.findAll({
+      include: [{ model: Project, where: { id: projectId } }],
+    });
+    const completedTasks = allTasks.filter((task) => task.status === 'Done');
+    const inProgressTasks = allTasks.filter((task) => task.status !== 'Done');
+    // calculate total time spent on tasks on project
+    const totalTimeSpent = calculateTimeSpentOnProject(project);
+    const longestTasks = calculateLongestTasksOnProject(project);
+    const averageTimeSpent = calculateAverageTimeSpentOnProject(project);
+    const averageTimeEachUser = calculateAverageTimeSpentOnProjectByUser(project);
+
+    return { completedTasks, inProgressTasks, totalTimeSpent, longestTasks, averageTimeSpent, averageTimeEachUser, allTasks };
+  } catch (error) {
+    console.log(error);
     throw new HttpError('ServerError');
   }
 };

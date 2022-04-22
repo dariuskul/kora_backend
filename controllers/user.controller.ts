@@ -92,3 +92,23 @@ export const getAdminDashBoard = async () => {
     }
   }
 }
+
+export const sendPasswordRemindLink  = async (email: string) => {
+  try {
+    return await service.senddPasswordRestoreLink(email);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      throw error;
+    }
+  }
+}
+
+export const restorePassword = async (email: string, password: string) => {
+  try {
+    return await service.resetPassword(email, password);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      throw error;
+    }
+  }
+}

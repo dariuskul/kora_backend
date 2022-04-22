@@ -29,7 +29,7 @@ export const create = async (payload: CreateTaskDTO, projectId?: number) => {
   }
 
   try {
-    const task = await Task.create(payload);
+    const task = await Task.create({ ...payload, status: 'Active' });
     if (projectId && project) {
       await project.addTask([task]);
     }
@@ -48,7 +48,7 @@ export const synchronizeTasks = async (boardId: string) => {
     if (task || !project) {
       return;
     }
-    const newTask = await Task.create({ id: issue.id, description: issue.fields.summary });
+    const newTask = await Task.create({ id: issue.id, description: issue.fields.summary, status: 'Active' });
     if (project) {
       await project.addTask(newTask);
     }
@@ -59,7 +59,6 @@ export const getAll = async (userId: number) => {
   try {
     const user = await User.findByPk(userId);
     if (!user) {
-      console.log('Err');
       throw new HttpError('ServerError');
     }
     await synchronizeProjects(user);
@@ -67,10 +66,8 @@ export const getAll = async (userId: number) => {
     const filteredTasks = tasks.filter((task) =>
       hasAccessToAllProjects(user) ? task : task.project.users.filter((item) => item.id === user.id).length > 0
     );
-    console.log('cia');
     return filteredTasks;
   } catch (error) {
-    console.log('Err', error);
     throw new HttpError('ServerError');
   }
 };
@@ -115,7 +112,6 @@ export const asignTaskToUser = async (taskId: number, userId: number) => {
     await user.addTask(task);
     return task;
   } catch (error) {
-    console.log(error);
     throw new HttpError('ServerError');
   }
 };
@@ -148,7 +144,6 @@ export const getTasksByUserId = async (userId: number, filters: TaskFilters, pro
   if (!userId) {
     throw new HttpError('BadRequest', 'Provide user id');
   }
-  console.log('fil', filters);
 
   const user = await User.findByPk(userId);
 
@@ -177,18 +172,22 @@ export const getTasksByUserId = async (userId: number, filters: TaskFilters, pro
     }
     // if filters are provided, filter tasks by filters
     if (filters) {
-      const { projectId, assigneeId } = filters;
+      const { projectId, assignee, status } = filters;
       const filteredTasks = accessableTasks.filter((task) => {
-        if (projectId === 'All' || assigneeId === 'All') {
-          return true;
-        }
-        if (projectId && task.projectId !== projectId) {
+        if (assignee === 'All' && projectId === 'All' && status === 'All' ) return true;
+        if (projectId && projectId !== 'All' &&  Number(task.projectId) !== Number(projectId)) {
           return false;
         }
-        if (projectId && task.assigneeId !== assigneeId) {
+        if ((task.assignee?.id) && assignee === 'None') {
           return false;
         }
-        return false;
+        if (status !== 'All' && task.status !== status) {
+          return false;
+        }
+        if (Number(task?.assignee?.id) !== Number(assignee) && assignee !== 'None' && assignee !== 'All') {
+          return false;
+        }
+        return true;
       });
       return filteredTasks;
     }
@@ -228,7 +227,7 @@ export const updateTask = async (taskId: number, payload: CreateTaskDTO) => {
   }
 
   try {
-    if (payload.description) {
+    if (payload.description || payload.status) {
       await task.update(payload);
     }
     if (payload.assigneeId) {
@@ -237,12 +236,10 @@ export const updateTask = async (taskId: number, payload: CreateTaskDTO) => {
         user = await User.findByPk(payload.assigneeId);
       }
       if (task.assignee || task.assigneeId) {
-        console.log('cia1');
         const oldAssignee = await User.findByPk(task.assigneeId);
         if (!oldAssignee) {
           throw new HttpError('NotFound', 'User not found with that id');
         }
-        console.log('cia');
         await oldAssignee.removeTask(task.id);
       }
       if (payload.assigneeId !== -1 && user) {
@@ -251,7 +248,6 @@ export const updateTask = async (taskId: number, payload: CreateTaskDTO) => {
     }
     return task;
   } catch (error) {
-    console.log(error);
     throw new HttpError('ServerError');
   }
 };

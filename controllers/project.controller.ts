@@ -51,3 +51,13 @@ export const update = async (projectId: number, payload: UpdateProjectDTO) => {
     }
   }
 }
+
+export const getProjectStatisctics = async (projectId: number) => {
+  try {
+    return await service.getProjectStatisctics(projectId);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      throw error;
+    }
+  }
+}

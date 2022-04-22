@@ -72,4 +72,16 @@ projectRouter.put('/:id', authorize(), async (req: Request, res: Response) => {
   }
 });
 
+projectRouter.get('/:id/statistics', authorize(), async (req: Request, res: Response) => {
+  const projectId: string = req.params.id;
+  try {
+    const statistics = await projectController.getProjectStatisctics(Number(projectId));
+    return res.status(200).send(statistics);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(EStatus[error.status]).json({ message: error.message });
+    }
+  }
+});
+
 export default projectRouter;

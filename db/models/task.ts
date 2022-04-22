@@ -7,6 +7,7 @@ import User from './user';
 export interface TaskAttributes {
   id: number;
   description: string;
+  status: string;
 }
 
 export interface TaskInput extends Optional<TaskAttributes, 'id'> { }
@@ -37,6 +38,9 @@ class Task extends Model<TaskInput, TaskInput> {
 
   @Column
   description!: string;
+
+  @Column({ defaultValue: 'Active' })
+  status!: string;
 }
 
 export default Task;

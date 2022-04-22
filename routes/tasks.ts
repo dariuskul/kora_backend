@@ -15,15 +15,6 @@ const taskRouter = Router();
 var storage = multer.memoryStorage();
 var upload = multer({ storage: storage });
 taskRouter.post('/check', authorize(), upload.single('test'), async (req: Request, res: Response) => {
-  // const testa = req.file.buffer.toString('utf8');
-  // const test = parse(testa, (err, data) => {
-  //   // convert 2d array to 1d array
-  //   const tes1 = data.reduce((acc, cur) => {
-  //     return acc.concat(cur);
-  //   }, []);
-
-  //   console.log(tes1);
-  // });
   try {
     const test = await taskController.checkCsvFile(req.file);
     return res.status(200).send(test);
@@ -76,7 +67,6 @@ taskRouter.get('/available-tasks/:projectId?', authorize(), async (req: Request,
   const userId = (req.user as any).sub;
   const projectId = Number(req.params.projectId);
   const filters: any = req.query;
-  console.log('asdas', filters);
   try {
     const tasks = await taskController.getAvailableTasks(userId, filters, projectId);
     return res.status(200).send(tasks);

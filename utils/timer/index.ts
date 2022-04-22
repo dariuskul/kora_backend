@@ -1,4 +1,5 @@
 import moment from 'moment';
+import Project from '../../db/models/project';
 import Timer from '../../db/models/timer';
 
 export const checkIfHasTimerRunning = (timers?: Array<Timer>) => {
@@ -90,5 +91,80 @@ export const formatToHoursAndMinutes = (time: number) => {
   return result;
 }
 
+// calculate time spent on project
+export const calculateTimeSpentOnProject = (project: Project) => {
+  // get all tasks
+  const tasks = project.tasks;
+  // get all tasks timers
+  const timers = tasks.reduce((acc, item) => acc.concat(item.timers), [] as any);
 
+  // calculate total time of timers 
+  const totalTime = timers.reduce((acc, item) => acc + Number(getTimeDuration(item.startDate, item.endDate) || 0), 0);
+  // convert time to hours and minutes
+  const totalTimeFormatted = formatToHoursAndMinutes(totalTime);
+  return totalTimeFormatted;
+}
 
+// calculate longest tasks on project
+export const calculateLongestTasksOnProject = (project: Project) => {
+  // get all tasks
+  const tasks = project.tasks;
+  // get all tasks timers
+  const timers = tasks.reduce((acc, item) => acc.concat(item.timers), [] as any);
+
+ // get each tasks time duration
+  const tasksTimeDuration = timers.map((item) => { return { name: item.task.description, time: Number(getTimeDuration(item.startDate, item.endDate) || 0) } });
+
+  // get top 5 longest tasks
+  const top5LongestTasks = tasksTimeDuration.sort((a, b) => b.time - a.time).slice(0, 5);
+
+  // convert time to hours and minutes
+  const top5LongestTasksFormatted = top5LongestTasks.map((item) => {
+    const time = formatToHoursAndMinutes(item.time);
+    return { name: item.name, time };
+  });
+
+ 
+  return top5LongestTasksFormatted;
+}
+export const calculateAverageTimeSpentOnProject = (project: Project) => {
+  const tasks = project.tasks;
+  const timers = tasks.reduce((acc, item) => acc.concat(item.timers), [] as any);
+  const totalTime = timers.reduce((acc, item) => acc + Number(getTimeDuration(item.startDate, item.endDate) || 0), 0);
+  const numberOfTasks = tasks.filter((item) => item.timers.length > 0).length;
+  const averageTime = totalTime / numberOfTasks;
+  const averageTimeFormatted = formatToHoursAndMinutes(averageTime);
+
+  return averageTimeFormatted;
+}
+
+// calculate on average how long each team member spent on project
+// return array of objects with user name and average time
+export const calculateAverageTimeSpentOnProjectByUser = (project: Project) => {
+  const users = project.users;
+
+  const timers = project.tasks.reduce((acc, item) => acc.concat(item.timers), [] as any);
+
+  const usersTimeDuration = timers.map((item) => { return { user: item.user.fullName, time: Number(getTimeDuration(item.startDate, item.endDate) || 0) } });
+
+  const usersTimeDurationFormatted = usersTimeDuration.reduce((acc, item) => {
+    const user = acc.find((user) => user.user === item.user);
+    if (user) {
+      user.time += item.time;
+    } else {
+      acc.push({ user: item.user, time: item.time });
+    }
+    return acc;
+  }, [] as any);
+
+  console.log(usersTimeDurationFormatted)
+  
+
+  // get average time for each user
+  const usersTimeDurationFormattedWithAverage = usersTimeDurationFormatted.map((item) => {
+    return { user: item.user, time: item.time };
+  }
+  );
+
+  return usersTimeDurationFormattedWithAverage; 
+}
