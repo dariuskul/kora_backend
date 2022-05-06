@@ -9,6 +9,7 @@ import * as taskController from '../controllers/task.controller';
 import { CreateTaskDTO, TaskFilters } from '../db/dto/task.dto';
 import { authorize } from '../middlewares/authorize';
 import { HttpError } from '../types/error';
+import { ERoles } from '../constants/user';
 
 const taskRouter = Router();
 
@@ -101,5 +102,19 @@ taskRouter.get('/user-tasks/:id?', authorize(), async (req: Request, res: Respon
     }
   }
 })
+
+taskRouter.delete('/:id', authorize([ERoles.Admin]), async (req: Request, res: Response) => {
+  const id: number = Number(req.params.id);
+  try {
+    const task = await taskController.removeTask(id);
+    return res.status(200).send(task);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(EStatus[error.status]).json({ message: error.message });
+    }
+  }
+});
+
+
 
 export default taskRouter;

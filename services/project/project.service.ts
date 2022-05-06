@@ -8,7 +8,7 @@ import Timer from '../../db/models/timer';
 import User from '../../db/models/user';
 import { HttpError } from '../../types/error';
 import { checkIfCanAddWithoutRestrictions, compareProjects } from '../../utils/jira';
-import { checkStatus, isUserAlreadyAdded } from '../../utils/projects';
+import { checkStatus, hasAccessToProject, isUserAlreadyAdded } from '../../utils/projects';
 import { calculateAverageTimeSpentOnProject, calculateAverageTimeSpentOnProjectByUser, calculateLongestTasksOnProject, calculateTimeSpentOnProject } from '../../utils/timer';
 import { hasAccessToAllProjects } from '../../utils/user';
 import { getAllBoards, getIssues } from '../integrations/jira/jira.service';
@@ -103,13 +103,49 @@ export const getAll = async (userId: number, filters: IProjectFilters) => {
         { model: Task, include: [{ model: Timer }] },
       ],
     });
-    const filteredProjects = allProjects.filter(
-      (project) =>
-        (hasAccessToAllProjects(user) ? project : !project.users.filter((projectUser) => projectUser.id === user.id)) &&
-        checkStatus(project, filters)
-    );
-    return filteredProjects;
+    // filter projects where user is already added
+    const filteredProjects = allProjects.filter((project) => {
+      return hasAccessToProject(user, project);
+    });
+
+    // filter projects by status
+    let projects = filteredProjects;
+    if (filters.access) {
+      if (filters.access === 'All') {
+      } else if (filters.access === 'Public') {
+        projects = projects.filter((project) => {
+          return project.isPublic
+        });
+      } else if (filters.access === 'Private') {
+        projects = projects.filter((project) => {
+          return !project.isPublic
+        });
+      }
+    }
+
+    if (filters.status) {
+      if (filters.status === 'All') {
+      } else if (filters.status === 'Active') {
+        projects = projects.filter((project) => {
+          return !project.isArchived;
+        });
+      } else if (filters.status === 'Archived') {
+        projects = projects.filter((project) => {
+          return project.isArchived;
+        });
+      }
+    }
+
+    if (filters.client) {
+      projects = projects.filter((project) => {
+        if (Number(filters.client) === -1) return true;
+        return Number(project.clientId) == Number(filters.client);
+      });
+    }
+
+    return projects;
   } catch (error) {
+    console.log(error);
     throw new HttpError('ServerError');
   }
 };
@@ -176,7 +212,6 @@ export const getProjectStatisctics = async (projectId: number) => {
 
     return { completedTasks, inProgressTasks, totalTimeSpent, longestTasks, averageTimeSpent, averageTimeEachUser, allTasks };
   } catch (error) {
-    console.log(error);
     throw new HttpError('ServerError');
   }
 };

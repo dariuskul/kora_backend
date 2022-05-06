@@ -11,7 +11,7 @@ import User, { UserInput } from '../../db/models/user';
 import { sendEmailRestorationEmail, sendVerificationEmail } from '../../others/templates/email';
 import { HttpError } from '../../types/error';
 import { compareHash, generateHash, generateRandomToken, omitHash } from '../../utils/auth';
-import { calculateMostTimeSpentOnProject, formatTopTimers, getLast12Months } from '../../utils/timer';
+import { calculateAlltimeSpentByUser, calculateMostTimeSpentOnProject, formatTopTimers, getLast12Months } from '../../utils/timer';
 
 export const create = async (payload: CreateUserDTO) => {
   if (!payload.email || !payload.fullName) {
@@ -144,9 +144,10 @@ export const getUserDashBoardInfo = async (userId: string) => {
       ]
     });
     const usersTimers = timers.filter(timer => timer.userId === Number(userId));
-    const getLast6Months = getLast12Months(usersTimers);
+    const { months, overTimeMonths } = getLast12Months(usersTimers);
     const topProjects = calculateMostTimeSpentOnProject(usersTimers);
-    return { last6Months: getLast6Months, topProjects };
+    const totalTracked = calculateAlltimeSpentByUser(usersTimers);
+    return { name: user.fullName, totalTracked, last6Months: months, topProjects, overTimeMonths: overTimeMonths };
   } catch (error) {
     throw new HttpError('ServerError');
   }

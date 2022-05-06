@@ -14,4 +14,5 @@ export type UpdateProjectDTO = Partial<CreateProjectDTO>;
 export interface IProjectFilters {
   status?: string;
   access?: string;
+  client?: number;
 }

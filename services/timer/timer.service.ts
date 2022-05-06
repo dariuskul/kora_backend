@@ -111,7 +111,7 @@ const getWeeklyEntries = async (userId) => {
     };
     group[1].forEach((timer) => {
       const projectEntry = {
-        project: timer.task.project.name,
+        project: timer.task?.project?.name || '',
         task: timer.task,
         startDate: timer.startDate,
         endDate: timer.endDate,

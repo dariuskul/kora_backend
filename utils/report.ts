@@ -43,50 +43,50 @@ export const getTasksTime = (tasks: Array<Task>, dateFrom: string, dateTo: strin
 
 // get total time tracked today for a user
 export const getTotalTimeTrackedToday = async (user: User): Promise<any> => {
-    const today = moment().format('YYYY-MM-DD');
-    const timers = await Timer.findAll({
-        include: [{ model: User, where: { id: user.id } }],
-    });
-    // filter timers to get only today's timers
-    const todayTimers = timers.filter(timer => moment(timer.startDate).format('YYYY-MM-DD') === today);
-    const totalTimeTrackedToday = todayTimers.reduce((acc, item) => acc + Number(getTimeDuration(item.startDate, item.endDate) || 0), 0);
-    return totalTimeTrackedToday;
+  const today = moment().format('YYYY-MM-DD');
+  const timers = await Timer.findAll({
+    include: [{ model: User, where: { id: user.id } }],
+  });
+  // filter timers to get only today's timers
+  const todayTimers = timers.filter(timer => moment(timer.startDate).format('YYYY-MM-DD') === today);
+  const totalTimeTrackedToday = todayTimers.reduce((acc, item) => acc + Number(getTimeDuration(item.startDate, item.endDate) || 0), 0);
+  return totalTimeTrackedToday;
 };
 
 // get project names and total time tracked today for a user
 export const getProjectsAndTotalTimeTrackedToday = async (user: User): Promise<any> => {
-    const today = moment().format('YYYY-MM-DD');
-    const projects = await Project.findAll({
-        include: [{ model: User, where: { id: user.id } }, { model: Task, as: 'tasks', include: [{ model: Timer, as: 'timers' }] }],
-    });
-    const projectTime = projects.map((item) => {
-        return {
-            projectInfo: {
-                name: item.name,
-                totalProjectTime: formatToHoursAndMinutes(getProjectTime(item, today, today)),
-            },
-        };
-    });
-    return projectTime;
+  const today = moment().format('YYYY-MM-DD');
+  const projects = await Project.findAll({
+    include: [{ model: User, where: { id: user.id } }, { model: Task, as: 'tasks', include: [{ model: Timer, as: 'timers' }] }],
+  });
+  const projectTime = projects.map((item) => {
+    return {
+      projectInfo: {
+        name: item.name,
+        totalProjectTime: formatToHoursAndMinutes(getProjectTime(item, today, today)),
+      },
+    };
+  });
+  return projectTime;
 };
-    
+
 
 
 // send email to user
 export const sendDailySummary = async () => {
-    const users = await User.findAll();
-    users.map (async item => {
-        if (item.dailySummaries) {
-            try {
-                const totalTimeTracked = formatToHoursAndMinutes( await getTotalTimeTrackedToday(item));
-                const projects = await getProjectsAndTotalTimeTrackedToday(item);
-                await sendEmail([item.email], dailySummary({ totalTimeTracked, projects }), 'dailySummary', 'Kora daily summary');
-            } catch (error) {
-                console.log('error', error);
-            }
-        }
-    })   
- }
+  const users = await User.findAll();
+  users.map(async item => {
+    if (item?.dailySummaries) {
+      try {
+        const totalTimeTracked = formatToHoursAndMinutes(await getTotalTimeTrackedToday(item));
+        const projects = await getProjectsAndTotalTimeTrackedToday(item);
+        await sendEmail([item.email], dailySummary({ totalTimeTracked, projects }), 'dailySummary', 'Kora daily summary');
+      } catch (error) {
+        throw error;
+      }
+    }
+  })
+}
 
 
 

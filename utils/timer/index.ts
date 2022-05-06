@@ -1,6 +1,7 @@
 import moment from 'moment';
 import Project from '../../db/models/project';
 import Timer from '../../db/models/timer';
+import User from '../../db/models/user';
 
 export const checkIfHasTimerRunning = (timers?: Array<Timer>) => {
   if (!timers) {
@@ -21,6 +22,7 @@ export const formatTopTimers = (timers: Array<Timer>) => {
 
 export const getLast12Months = (timers: Array<Timer>) => {
   const months: any = [];
+  let overTimeMonths: any = [];
   const currentMonth = moment().format('MMMM');
   const currentYear = moment().format('YYYY');
   const currentMonthTimers = timers.filter((item) => moment(item.startDate).format('MMMM') === currentMonth && moment(item.startDate).format('YYYY') === currentYear);
@@ -31,19 +33,25 @@ export const getLast12Months = (timers: Array<Timer>) => {
   };
   months.push(currentMonthObject);
 
+
   for (let i = 1; i < 6; i++) {
     const month = moment().subtract(i, 'months').format('MMMM');
     const year = moment().subtract(i, 'months').format('YYYY');
     const monthTimers = timers.filter((item) => moment(item.startDate).format('MMMM') === month && moment(item.startDate).format('YYYY') === year);
     const monthTime = monthTimers.reduce((acc, item) => acc + Number(getTimeDuration(item.startDate, item.endDate) || 0), 0);
+    const overTime = monthTimers.reduce((acc, item) => acc + Number(getTimeDuration(item.startDate, item.endDate) > 306000000 ? getTimeDuration(item.startDate, item.endDate) : 0), 0);
     const monthObject = {
       month,
       time: monthTime,
     };
+    const overTimeObject = {
+      month,
+      time: monthTime > 306000000 ? monthTime : 0,
+    };
+    overTimeMonths.push(overTimeObject);
     months.push(monthObject);
   }
-
-  return months.reverse();
+  return { months: months.reverse(), overTimeMonths: overTimeMonths.reverse() };
 }
 
 export const getTimeDuration = (startDate: string, endDate: string) => {
@@ -70,7 +78,7 @@ export const calculateMostTimeSpentOnProject = (timers: Array<Timer>) => {
     } else {
       projects.push({
         id: item.task.projectId,
-        name: item.task.project.name,
+        name: item.task.project?.name,
         time: Number(getTimeDuration(item.startDate, item.endDate) || 0),
       });
     }
@@ -85,9 +93,9 @@ export const formatToHoursAndMinutes = (time: number) => {
   }
   var dur = moment.duration(time, 'ms');
   var hours = Math.floor(dur.asHours());
-  var mins  = Math.floor(dur.asMinutes()) - hours * 60;
-  
-  var result = `${hours  < 10 ? `0${hours}` : hours}` + ":" + `${mins < 10 ? `0${mins}` : mins}`;
+  var mins = Math.floor(dur.asMinutes()) - hours * 60;
+
+  var result = `${hours < 10 ? `0${hours}` : hours}` + ":" + `${mins < 10 ? `0${mins}` : mins}`;
   return result;
 }
 
@@ -112,7 +120,7 @@ export const calculateLongestTasksOnProject = (project: Project) => {
   // get all tasks timers
   const timers = tasks.reduce((acc, item) => acc.concat(item.timers), [] as any);
 
- // get each tasks time duration
+  // get each tasks time duration
   const tasksTimeDuration = timers.map((item) => { return { name: item.task.description, time: Number(getTimeDuration(item.startDate, item.endDate) || 0) } });
 
   // get top 5 longest tasks
@@ -124,7 +132,7 @@ export const calculateLongestTasksOnProject = (project: Project) => {
     return { name: item.name, time };
   });
 
- 
+
   return top5LongestTasksFormatted;
 }
 export const calculateAverageTimeSpentOnProject = (project: Project) => {
@@ -157,14 +165,17 @@ export const calculateAverageTimeSpentOnProjectByUser = (project: Project) => {
     return acc;
   }, [] as any);
 
-  console.log(usersTimeDurationFormatted)
-  
-
   // get average time for each user
   const usersTimeDurationFormattedWithAverage = usersTimeDurationFormatted.map((item) => {
     return { user: item.user, time: item.time };
   }
   );
 
-  return usersTimeDurationFormattedWithAverage; 
+  return usersTimeDurationFormattedWithAverage;
+}
+
+export const calculateAlltimeSpentByUser = (timers: Array<Timer>) => {
+  const totalTime = timers.reduce((acc, item) => acc + Number(getTimeDuration(item.startDate, item.endDate) || 0), 0);
+  const totalTimeFormatted = formatToHoursAndMinutes(totalTime);
+  return totalTimeFormatted;
 }

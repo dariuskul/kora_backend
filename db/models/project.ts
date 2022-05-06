@@ -1,6 +1,7 @@
 import { HasManyAddAssociationMixin, HasManyGetAssociationsMixin, Optional } from 'sequelize';
-import { BelongsToMany, Column, HasMany, Model, Table } from 'sequelize-typescript';
+import { BelongsTo, BelongsToMany, Column, ForeignKey, HasMany, Model, Table } from 'sequelize-typescript';
 import sequelizeConnection from '../config';
+import Client from './client';
 import Task from './task';
 import User from './user';
 import UserProject from './user_project';
@@ -24,6 +25,13 @@ class Project extends Model<ProjectAttributes, ProjectInput> {
   declare getTasks: HasManyGetAssociationsMixin<Task>;
   @BelongsToMany(() => User, () => UserProject)
   users!: Array<User>;
+
+  @ForeignKey(() => Client)
+  @Column({ allowNull: true })
+  clientId!: number
+
+  @BelongsTo(() => Client)
+  client!: Client;
 
   @HasMany(() => Task)
   tasks!: Array<Task>;

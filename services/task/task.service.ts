@@ -5,6 +5,7 @@ import Project from '../../db/models/project';
 import Task from '../../db/models/task';
 import User from '../../db/models/user';
 import { HttpError } from '../../types/error';
+import { hasAccessToProject } from '../../utils/projects';
 import { hasAccessToAllProjects } from '../../utils/user';
 import { getIssues } from '../integrations/jira/jira.service';
 import { synchronizeProjects } from '../project/project.service';
@@ -64,7 +65,7 @@ export const getAll = async (userId: number) => {
     await synchronizeProjects(user);
     const tasks = await Task.findAll({ include: [{ model: Project, include: [{ model: User }] }] });
     const filteredTasks = tasks.filter((task) =>
-      hasAccessToAllProjects(user) ? task : task.project.users.filter((item) => item.id === user.id).length > 0
+      hasAccessToAllProjects(user) ? task : hasAccessToProject(user, task.project),
     );
     return filteredTasks;
   } catch (error) {
@@ -130,7 +131,7 @@ export const getUserTasks = async (userId: number) => {
   try {
     const tasks = await Task.findAll({ include: [{ model: Project, include: [{ model: User }] }] });
     const accessableTasks = tasks.filter((task) =>
-      hasAccessToAllProjects(user) ? task : task.project.users.filter((item) => item.id === user.id).length > 0
+      hasAccessToAllProjects(user) ? task : hasAccessToProject(user, task.project),
     );
     const assignedTasks = accessableTasks.filter((task) => task.assigneeId === userId);
     return assignedTasks;
@@ -159,7 +160,7 @@ export const getTasksByUserId = async (userId: number, filters: TaskFilters, pro
       ],
     });
     const accessableTasks = tasks.filter((task) =>
-      hasAccessToAllProjects(user) ? task : task.project.users.filter((item) => item.id === user.id).length > 0
+      hasAccessToAllProjects(user) ? task : hasAccessToProject(user, task?.project)
     );
     // if project id is provided, filter tasks by project id
     if (projectId) {
@@ -174,8 +175,8 @@ export const getTasksByUserId = async (userId: number, filters: TaskFilters, pro
     if (filters) {
       const { projectId, assignee, status } = filters;
       const filteredTasks = accessableTasks.filter((task) => {
-        if (assignee === 'All' && projectId === 'All' && status === 'All' ) return true;
-        if (projectId && projectId !== 'All' &&  Number(task.projectId) !== Number(projectId)) {
+        if (assignee === 'All' && projectId === 'All' && status === 'All') return true;
+        if (projectId && projectId !== 'All' && Number(task.projectId) !== Number(projectId)) {
           return false;
         }
         if ((task.assignee?.id) && assignee === 'None') {
@@ -214,6 +215,25 @@ export const getTaskById = async (taskId: number) => {
     throw new HttpError('ServerError');
   }
 };
+
+export const removeTask = async (taskId: number) => {
+  if (!taskId) {
+    throw new HttpError('BadRequest', 'Provide task id');
+  }
+
+  const task = await Task.findByPk(taskId);
+
+  if (!task) {
+    throw new HttpError('NotFound', 'Task not found with that id');
+  }
+
+  try {
+    await task.destroy();
+    return task;
+  } catch (error) {
+    throw new HttpError('ServerError');
+  }
+}
 
 export const updateTask = async (taskId: number, payload: CreateTaskDTO) => {
   if (!taskId) {

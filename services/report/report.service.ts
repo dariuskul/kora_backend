@@ -7,9 +7,11 @@ import { formatToHoursAndMinutes, getTimeDuration } from '../../utils/timer';
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import moment from 'moment';
+import { IPerformanceFilters } from '../../types/filters';
+import { getDashBoardInfo } from '../../controllers/user.controller';
 
 export const generateTrackingReport = async (project: string, user: string, dateFrom: string, dateTo: string) => {
-    const doc = new jsPDF()
+  const doc = new jsPDF()
   const projects = await Project.findAll({
     include: [
       { model: User, as: 'users' },
@@ -29,5 +31,30 @@ export const generateTrackingReport = async (project: string, user: string, date
       },
     };
   });
-  return { projects: projectTime, dateFrom: moment(dateFrom).format('YYYY-MM-DD'), dateUntil: moment(dateTo).format('YYYY-MM-DD')  };
+  return { projects: projectTime, dateFrom: moment(dateFrom).format('YYYY-MM-DD'), dateUntil: moment(dateTo).format('YYYY-MM-DD') };
 };
+
+
+export const getUserPerformanceReview = async (filters: IPerformanceFilters) => {
+  // check if user is provided in filters and if not, get all users
+  try {
+    let users;
+    if (filters.userId) {
+      users = await User.findAll({ where: { id: filters.userId } });
+    } else {
+      users = await User.findAll();
+    }
+    if (users) {
+      let resultArray: any = [];
+      users.forEach((user) => {
+        const data = getDashBoardInfo(user.id);
+        resultArray.push(data);
+      })
+      const data = await Promise.all([...resultArray]);
+      return data;
+    }
+    return [];
+  } catch (error) {
+    throw error;
+  }
+}

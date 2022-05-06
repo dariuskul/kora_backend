@@ -11,7 +11,7 @@ import { AsyncTask, SimpleIntervalJob, Task, ToadScheduler } from 'toad-schedule
 import { notify } from '@heroku-cli/notifications';
 import multer from 'multer';
 import { sendDailySummary } from './utils/report';
-const notifier = require('node-notifier');
+import compression from 'compression';
 const scheduler = new ToadScheduler()
 
 // Object
@@ -38,6 +38,8 @@ const options = {
 
 const specs = swaggerJsDoc(options);
 
+// app.use(compression())
+
 app.use('/swagger', swaggerUi.serve, swaggerUi.setup(specs));
 
 app.use(express.json());
@@ -50,8 +52,8 @@ app.use(fileUpload());
 
 
 const task = new AsyncTask(
-  'simple task', 
-  () => { return sendDailySummary()},
+  'simple task',
+  () => { return sendDailySummary() },
   (err: Error) => { /* handle error here */ });
 
 const job = new SimpleIntervalJob({ days: 1 }, task)

@@ -2,7 +2,7 @@ import moment from "moment";
 
 export const template = ({ data }) => {
   const today = new Date();
-return `
+  return `
   <!doctype html>
   <html>
      <head>
@@ -10,19 +10,16 @@ return `
         <title>PDF Result Template</title>
         <style>
         #customers {
-          font-family: Arial, Helvetica, sans-serif;
+          font-family: OfficinaSans Cyr;
           border-collapse: collapse;
           width: 100%;
+          border-radius: 4px;
         }
         
         #customers td, #customers th {
           border: 1px solid #ddd;
           padding: 8px;
         }
-        
-        #customers tr:nth-child(even){background-color: #f2f2f2;}
-        
-        #customers tr:hover {background-color: #ddd;}
         
         #customers th {
           padding-top: 12px;
@@ -36,14 +33,30 @@ return `
           flex-direction: column;
           gap: 10px;
         }
+        .date-interval {
+          text-align: right;
+          font-size: 20px;
+        }
+        .pdf-title {
+          text-align: center;
+          font-size: 30px;
+        }
+        .total-project-time {
+          text-align: left;
+          margin-top: 10px;
+          font-size: 16px;
+        }
+        .total {
+          font-weight: 700;
+        }
         </style>
      </head>
      <body>
-     <h1>Requested time interval: ${data.dateFrom} - ${data.dateUntil}</h1>
+     <h2 class="date-interval"> ${data.dateFrom} - ${data.dateUntil}</h2>
+     <h3 class="pdf-title">Time report</h3>
      <div class="flex">
      ${data.projects.map(item => `
      <h1>Project: ${item.projectInfo.name}</h1>
-      <h2>Total: ${(item.projectInfo.totalProjectTime)} h</h2>
       <table id="customers">
       <tr>
         <th>Task</th>
@@ -54,7 +67,11 @@ return `
         <td>${task.taskInfo.name}</td>
         <td>${task.taskInfo.totalTaskTime}</td>
       </tr>
-      `)}
+      `).join('')}
+      <tr>
+      <td class="total">Total</td>
+      <td class="total">${(item.projectInfo.totalProjectTime)} </td>
+    </tr>
       </table>
   `)}
      </body>

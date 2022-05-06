@@ -22,6 +22,17 @@ export const getAll = async (userId: number) => {
   }
 };
 
+export const removeTask = async (taskId: number) => {
+  try {
+    return await service.removeTask(taskId);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      throw error;
+    }
+  }
+};
+
+
 export const getTasksByProjectId = async (projectId: number) => {
   try {
     return await service.getTasksByProjectId(projectId);

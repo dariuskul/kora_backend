@@ -13,6 +13,16 @@ export const checkStatus = (project: Project, filters: IProjectFilters) => {
   return checkArchived(project, status) && checkAccess(project, access);
 };
 
+// check if user has access to project
+export const hasAccessToProject = (user: User, project: Project) => {
+  if (!project) return true;
+  if (user.role === 'admin') return true;
+  if (project.isPublic) {
+    return true;
+  }
+  return project.users.filter(item => item.id === user.id).length > 0;
+};
+
 const checkArchived = (project: Project, status: string) => {
   if (status === EProjectStatus.All) {
     return true;

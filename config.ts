@@ -13,7 +13,7 @@ export const jira = new JiraApi({
   protocol: 'https',
   host: 'barbori.atlassian.net',
   username: 'dariuux@gmail.com',
-  password: 'SvlrLGx705d7pjp9WSqqC993',
+  password: 'xPaaD5Il87Rxu6FDtsZn6CF5',
   apiVersion: '3',
   strictSSL: true
 })

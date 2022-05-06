@@ -141,6 +141,7 @@ userRouter.get('/admin/dashboard', authorize([ERoles.Admin, ERoles.Moderator]), 
 
   };
   if (req.headers.accept === 'text/event-stream') {
+    console.log('cia');
     sendEvent(req, res);
   } else {
     res.json({ message: 'Ok' });
