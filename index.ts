@@ -1,17 +1,12 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import swaggerJsDoc from 'swagger-jsdoc';
-import swaggerUi from 'swagger-ui-express';
 import { connectDb } from './db';
 import router from './routes';
 import fileUpload from 'express-fileupload';
-import nodemailer from 'nodemailer';
 import { AsyncTask, SimpleIntervalJob, Task, ToadScheduler } from 'toad-scheduler';
-import { notify } from '@heroku-cli/notifications';
-import multer from 'multer';
 import { sendDailySummary } from './utils/report';
-import compression from 'compression';
+import { calculateData, calculateValues } from './services/internal/scheduler';
 const scheduler = new ToadScheduler()
 
 // Object
@@ -20,27 +15,6 @@ const app: express.Application = express();
 const port = process.env.PORT || 3000;
 
 connectDb();
-
-const options = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'Kora',
-      version: '1.0.0',
-      description: 'Kora API'
-    },
-    servers: [{
-      url: 'http://localhost:3000'
-    }]
-  },
-  apis: ['./routes/users.js']
-};
-
-const specs = swaggerJsDoc(options);
-
-// app.use(compression())
-
-app.use('/swagger', swaggerUi.serve, swaggerUi.setup(specs));
 
 app.use(express.json());
 app.use(bodyParser.json());
@@ -56,9 +30,13 @@ const task = new AsyncTask(
   () => { return sendDailySummary() },
   (err: Error) => { /* handle error here */ });
 
-const job = new SimpleIntervalJob({ days: 1 }, task)
-scheduler.addSimpleIntervalJob(job)
+const task2 = new AsyncTask('stop timers', () => calculateData(), (err: Error) => { /* handle error here */ });
 
+const job = new SimpleIntervalJob({ seconds: 99999 }, task)
+const job2 = new SimpleIntervalJob({ seconds: 1 }, task2)
+
+scheduler.addSimpleIntervalJob(job)
+scheduler.addSimpleIntervalJob(job2);
 
 app.listen(port, () => {
   console.log(`Listening at http://localhost:${port}/`);

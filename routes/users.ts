@@ -46,8 +46,14 @@ userRouter.post('/login', async (req: Request, res: Response) => {
   }
 });
 
-userRouter.patch('/', authorize(), async (req: Request, res: Response) => {
-  const userId: string = (req.user as any).sub;
+userRouter.patch('/:id?', authorize(), async (req: Request, res: Response) => {
+  let userId: string;
+  // check if user is admin or moderator
+  if ((req.user as any).role === ERoles.Admin || (req.user as any).role === ERoles.Moderator) {
+    userId = req.params.id || (req.user as any).sub;
+  } else {
+    userId = (req.user as any).sub;
+  }
   const updateUser: UpdateUserDTO = req.body;
 
   try {
@@ -60,7 +66,7 @@ userRouter.patch('/', authorize(), async (req: Request, res: Response) => {
   }
 });
 
-userRouter.post('/add', async (req: Request, res: Response) => {
+userRouter.post('/add', authorize([ERoles.Admin]), async (req: Request, res: Response) => {
   const { email } = req.body;
   try {
     const user = await userController.addUser(email);
@@ -125,7 +131,6 @@ userRouter.delete('/:id', authorize(), async (req: Request, res: Response) => {
 });
 
 
-
 userRouter.get('/admin/dashboard', authorize([ERoles.Admin, ERoles.Moderator]), async (req: Request, res: Response) => {
   const sendEvent = (_req: Request, res: Response) => {
     res.writeHead(200, {
@@ -141,7 +146,6 @@ userRouter.get('/admin/dashboard', authorize([ERoles.Admin, ERoles.Moderator]), 
 
   };
   if (req.headers.accept === 'text/event-stream') {
-    console.log('cia');
     sendEvent(req, res);
   } else {
     res.json({ message: 'Ok' });

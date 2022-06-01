@@ -89,7 +89,10 @@ export const update = async (userId: string, payload: UpdateUserDTO) => {
   }
 
   const user = await User.findByPk(userId);
-
+  let notify: null | number = null;
+  if (payload.notifyAfter && payload.notifyAfter > 0) {
+    notify = payload.notifyAfter;
+  }
   if (!user) {
     throw new HttpError('NotFound', 'User was not found');
   }
@@ -98,7 +101,7 @@ export const update = async (userId: string, payload: UpdateUserDTO) => {
     passwordHash = generateHash(payload.password, 15);
   }
 
-  Object.assign(user, { ...payload, passwordHash });
+  Object.assign(user, { ...payload, passwordHash, notifyAfter: notify });
 
   return await user.save();
 };

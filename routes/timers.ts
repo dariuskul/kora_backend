@@ -6,6 +6,7 @@ import { authorize } from '../middlewares/authorize';
 import { writeDataToEventSource } from '../services/internal/eventSource';
 import { calculateValues } from '../services/internal/scheduler';
 import { HttpError } from '../types/error';
+import { Chain } from 'repeat'
 
 const timerRouter = Router();
 
@@ -21,6 +22,19 @@ timerRouter.post('/start', authorize(), async (req: Request, res: Response) => {
     }
   }
 });
+
+timerRouter.patch('/time', authorize(), async (req: Request, res: Response) => {
+  const taskId = req.body.taskId;
+  const duration = req.body.duration;
+  const date = req.body.date;
+  const userId = req.body.userId;
+  try {
+    await timerController.editTaskTimer(userId, taskId, duration, date);
+    return res.sendStatus(201);
+  } catch (error) {
+
+  }
+})
 
 timerRouter.post('/stop/:userId?', authorize(), async (req: Request, res: Response) => {
   let userId;
@@ -77,25 +91,43 @@ timerRouter.get('/current', authorize(), async (req: Request, res: Response) => 
   }
 })
 
+timerRouter.get('/synchronize', authorize(), async (req: Request, res: Response) => {
+  try {
+    await timerController.synchronizeData();
+    return res.sendStatus(201);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(EStatus[error.status]).json({ message: error.message });
+    }
+  }
+})
+
 timerRouter.get('/events', authorize(), async (req: Request, res: Response) => {
+  let isFinished = false;
+  let chain = new Chain();
   const sendEvent = (_req: Request, res: Response) => {
     res.writeHead(200, {
       'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
       'Content-Type': 'text/event-stream',
     });
-
-    setInterval(async () => {
-      const values = await calculateValues();
-      writeDataToEventSource(res, JSON.stringify(values));
-    }, 5000);
-
+    const test = async () => {
+      let arrayOfNotifs = [];
+      // let showWarnings = [];
+      await calculateValues(arrayOfNotifs, []);
+      writeDataToEventSource(res, JSON.stringify({ showNotifsTo: arrayOfNotifs }));
+    }
+    chain.every(1000).do(test);
   };
+  // 1 sec to milliseconds 
   if (req.headers.accept === 'text/event-stream') {
     sendEvent(req, res);
   } else {
     res.json({ message: 'Ok' });
   }
 })
+
+// write a function which executes a function fully and then after 5 seconds repeats the function 
+
 
 export default timerRouter;

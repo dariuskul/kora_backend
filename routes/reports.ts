@@ -29,8 +29,10 @@ reportsRouter.get('/', authorize([ERoles.Admin]), async (req: Request, res: Resp
 
 reportsRouter.get('/performance', authorize([ERoles.Admin]), async (req: Request, res: Response) => {
   const data: any = req.query;
+  // parse projects (',' or if there is only 1 project '')
+  const projects = data.projects.split(',') || [data.projects];
   try {
-    const result = await reportController.getUsersPerformance(data);
+    const result = await reportController.getUsersPerformance({ ...data, projects });
     return res.status(200).send(result);
   } catch (error) {
     if (error instanceof HttpError) {

@@ -41,7 +41,7 @@ export const dailySummary = (data: IDailySummary) => {
         </style>
      </head>
      <body>
-     <h1>Total time spent ${data.totalTimeTracked} </h1>
+     <h1>Total time spent ${data.totalTimeTracked}h </h1>
      <div class="flex">
      <table id="customers">
      <tr>
@@ -49,16 +49,15 @@ export const dailySummary = (data: IDailySummary) => {
      <th>Time spent (HH:MM)</th>
      </tr>
      ${data.projects.map(
-       (item) => `
-     ${
-       item &&
-       `<tr>
+    (item) => `
+     ${item &&
+      `<tr>
      <td>${item.projectInfo.name}</td>
      <td>${item.projectInfo.totalProjectTime}</td>
    </tr>`
-     }
+      }
   `
-     ).join(' ')}
+  ).join(' ')}
   </table>
      </body>
   </html>

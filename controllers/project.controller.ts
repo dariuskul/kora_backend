@@ -51,6 +51,16 @@ export const update = async (projectId: number, payload: UpdateProjectDTO) => {
     }
   }
 }
+export const removeUserFromProject = async (projectId: number, userId: number) => {
+  try {
+    return await service.removeUserFromProject(projectId, userId);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      throw error;
+    }
+  }
+}
+
 
 export const getProjectStatisctics = async (projectId: number) => {
   try {

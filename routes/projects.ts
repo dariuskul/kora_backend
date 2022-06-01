@@ -47,6 +47,19 @@ projectRouter.get('/', authorize(), async (req: Request, res: Response) => {
   }
 });
 
+projectRouter.patch('/remove-user', authorize(), async (req: Request, res: Response) => {
+  const projectId = req.body.projectId;
+  const userId = req.body.userId;
+  try {
+    await projectController.removeUserFromProject(Number(projectId), userId);
+    return res.sendStatus(200);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(EStatus[error.status]).json({ message: error.message });
+    }
+  }
+});
+
 projectRouter.get('/:id', authorize(), async (req: Request, res: Response) => {
   const projectId: string = req.params.id;
   try {
@@ -59,7 +72,7 @@ projectRouter.get('/:id', authorize(), async (req: Request, res: Response) => {
   }
 });
 
-projectRouter.put('/:id', authorize(), async (req: Request, res: Response) => {
+projectRouter.put('/:id', authorize([ERoles.Admin]), async (req: Request, res: Response) => {
   const projectId: string = req.params.id;
   const payload: UpdateProjectDTO = req.body;
   try {
@@ -72,7 +85,7 @@ projectRouter.put('/:id', authorize(), async (req: Request, res: Response) => {
   }
 });
 
-projectRouter.get('/:id/statistics', authorize(), async (req: Request, res: Response) => {
+projectRouter.get('/:id/statistics', authorize([ERoles.Admin]), async (req: Request, res: Response) => {
   const projectId: string = req.params.id;
   try {
     const statistics = await projectController.getProjectStatisctics(Number(projectId));

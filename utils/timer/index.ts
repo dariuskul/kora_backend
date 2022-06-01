@@ -39,7 +39,6 @@ export const getLast12Months = (timers: Array<Timer>) => {
     const year = moment().subtract(i, 'months').format('YYYY');
     const monthTimers = timers.filter((item) => moment(item.startDate).format('MMMM') === month && moment(item.startDate).format('YYYY') === year);
     const monthTime = monthTimers.reduce((acc, item) => acc + Number(getTimeDuration(item.startDate, item.endDate) || 0), 0);
-    const overTime = monthTimers.reduce((acc, item) => acc + Number(getTimeDuration(item.startDate, item.endDate) > 306000000 ? getTimeDuration(item.startDate, item.endDate) : 0), 0);
     const monthObject = {
       month,
       time: monthTime,
@@ -55,6 +54,9 @@ export const getLast12Months = (timers: Array<Timer>) => {
 }
 
 export const getTimeDuration = (startDate: string, endDate: string) => {
+  if (!startDate || !endDate) {
+    return 0;
+  }
   const start = moment(startDate);
   const end = moment(endDate);
   const duration = moment.duration(end.diff(start));
@@ -66,9 +68,6 @@ export const convertDateToTime = (date: string) => {
   return moment(date).format('X');
 }
 
-
-// calculate most time spent on project
-// dont include month
 export const calculateMostTimeSpentOnProject = (timers: Array<Timer>) => {
   const projects: any = [];
   timers.forEach((item) => {
@@ -98,6 +97,13 @@ export const formatToHoursAndMinutes = (time: number) => {
   var result = `${hours < 10 ? `0${hours}` : hours}` + ":" + `${mins < 10 ? `0${mins}` : mins}`;
   return result;
 }
+
+// get local sceridial time
+export const getLocalSceralTime = (date: string) => {
+  const time = moment(date).format('HH:mm');
+  return time;
+}
+
 
 // calculate time spent on project
 export const calculateTimeSpentOnProject = (project: Project) => {
@@ -145,12 +151,7 @@ export const calculateAverageTimeSpentOnProject = (project: Project) => {
 
   return averageTimeFormatted;
 }
-
-// calculate on average how long each team member spent on project
-// return array of objects with user name and average time
 export const calculateAverageTimeSpentOnProjectByUser = (project: Project) => {
-  const users = project.users;
-
   const timers = project.tasks.reduce((acc, item) => acc.concat(item.timers), [] as any);
 
   const usersTimeDuration = timers.map((item) => { return { user: item.user.fullName, time: Number(getTimeDuration(item.startDate, item.endDate) || 0) } });

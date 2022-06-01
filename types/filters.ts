@@ -1,6 +1,6 @@
 export interface IPerformanceFilters {
-  userId?: number;
-  projectId?: number;
-  from?: string;
-  to?: string;
+  userId: number;
+  projects: Array<number>;
+  from: string;
+  to: string;
 }

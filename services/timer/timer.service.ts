@@ -7,7 +7,6 @@ import Task from '../../db/models/task';
 import Timer from '../../db/models/timer';
 import User from '../../db/models/user';
 import { HttpError } from '../../types/error';
-import { checkIfHasTimerRunning } from '../../utils/timer';
 import { asignTaskToUser } from '../task/task.service';
 
 export const current = async (user: User) => {
@@ -32,9 +31,7 @@ export const updateTimer = async (timerId: number, payload: IUpdateTimerDTO) => 
       throw error;
     }
   }
-
 }
-
 
 export const start = async (taskId: number, userId: number) => {
   if (!taskId) {
@@ -92,14 +89,13 @@ export const stop = async (userId: number) => {
   }
 };
 
-
 const getWeeklyEntries = async (userId) => {
   const user = await User.findByPk(userId);
   if (!user) {
     return;
   }
   const timers = await user.getTimers({ include: [{ model: Task, include: [{ model: Project }] }] });
-  const groupedTimers = groupBy(timers, (timer) => moment(timer.endDate).startOf('week').format('YYYY-MM-DD'));
+  const groupedTimers = groupBy(timers, (timer) => moment(timer.startDate).startOf('week').format('YYYY-MM-DD'));
   const groupedTimersArray = toPairs(groupedTimers);
   const weeklyEntries: any = [];
   groupedTimersArray.forEach((group) => {
@@ -125,7 +121,7 @@ const getWeeklyEntries = async (userId) => {
     if (!weeklyEntry.projectEntries.length) {
       return;
     }
-    const groupedProjectEntries = groupBy(weeklyEntry.projectEntries, (projectEntry) => moment(projectEntry.endDate).format('YYYY-MM-DD'));
+    const groupedProjectEntries = groupBy(weeklyEntry.projectEntries, (projectEntry) => moment(projectEntry.startDate).format('YYYY-MM-DD'));
     const groupedProjectEntriesArray = toPairs(groupedProjectEntries);
     const projectEntriesByDay: any = [];
     groupedProjectEntriesArray.forEach((group) => {
@@ -173,3 +169,49 @@ export const getCurrentRunningTimer = async (userId: number) => {
   }
 };
 
+
+export const editTimeForTask = async (userId: number, taskId: number, date: string, duration: number) => {
+  // find task timers for the given date
+  const task = await Task.findByPk(taskId);
+  const user = await User.findByPk(userId);
+  if (!task) {
+    throw new HttpError('NotFound', 'Task not found');
+  }
+  if (!user) {
+    throw new HttpError('NotFound', 'User not found');
+  }
+  const timers = await task.getTimers({ include: [{ model: User, where: { id: userId } }] });
+  const timersForDate = timers.filter((timer) => moment(timer.startDate).format('YYYY-MM-DD') === date);
+  if (!timersForDate.length) {
+    throw new HttpError('NotFound', 'No timers found for the given date');
+  }
+  const totalDuration = timersForDate.reduce((acc, timer) => {
+    return acc + Math.abs(moment(timer.endDate).diff(timer.startDate, 'milliseconds'));
+  }, 0);
+  let durationVariable = duration;
+  timersForDate.forEach((timer) => {
+    if (timer.forcedStop) {
+      timer.update({ forcedStop: false });
+    }
+  })
+  if (durationVariable < totalDuration) {
+    timersForDate.forEach((timer) => {
+      if (!timer.endDate) {
+        return;
+      }
+      const diff = moment(timer.endDate).diff(timer.startDate, 'milliseconds');
+      if (diff > durationVariable) {
+        timer.update({ endDate: moment(timer.startDate).add(durationVariable, 'milliseconds').format() });
+        durationVariable = 0;
+        return;
+      } else {
+        timer.destroy();
+        durationVariable -= diff;
+      }
+    });
+  } else if (duration > totalDuration) {
+    const milisecondsToAdd = duration - totalDuration;
+    timersForDate[0].update({ endDate: moment(timersForDate[0].endDate).add(milisecondsToAdd, 'milliseconds').format() });
+  }
+
+};

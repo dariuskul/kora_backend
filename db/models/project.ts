@@ -1,4 +1,4 @@
-import { HasManyAddAssociationMixin, HasManyGetAssociationsMixin, Optional } from 'sequelize';
+import { HasManyAddAssociationMixin, HasManyGetAssociationsMixin, HasManyRemoveAssociationMixin, Optional } from 'sequelize';
 import { BelongsTo, BelongsToMany, Column, ForeignKey, HasMany, Model, Table } from 'sequelize-typescript';
 import sequelizeConnection from '../config';
 import Client from './client';
@@ -21,6 +21,8 @@ export interface ProjectInput extends Optional<ProjectAttributes, 'id' | 'isPubl
 class Project extends Model<ProjectAttributes, ProjectInput> {
   declare addTask: HasManyAddAssociationMixin<Task, number>;
   declare addUsers: HasManyAddAssociationMixin<User, number>;
+  declare removeUsers: HasManyRemoveAssociationMixin<User, number>;
+  declare getUsers: HasManyGetAssociationsMixin<User>;
   declare addProject: HasManyAddAssociationMixin<Project, number>;
   declare getTasks: HasManyGetAssociationsMixin<Task>;
   @BelongsToMany(() => User, () => UserProject)

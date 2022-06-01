@@ -93,7 +93,6 @@ export const addClientToProject = async (projectId: number, clientId: number) =>
     });
     return updatedProject;
   } catch (error) {
-    console.log(error);
     throw new HttpError('ServerError');
   }
 }

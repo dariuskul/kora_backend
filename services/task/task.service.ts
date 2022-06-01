@@ -8,7 +8,6 @@ import { HttpError } from '../../types/error';
 import { hasAccessToProject } from '../../utils/projects';
 import { hasAccessToAllProjects } from '../../utils/user';
 import { getIssues } from '../integrations/jira/jira.service';
-import { synchronizeProjects } from '../project/project.service';
 
 export const create = async (payload: CreateTaskDTO, projectId?: number) => {
   if (!payload.description) {
@@ -40,21 +39,6 @@ export const create = async (payload: CreateTaskDTO, projectId?: number) => {
   }
 };
 
-export const synchronizeTasks = async (boardId: string) => {
-  const boardIssues = await getIssues(boardId);
-
-  boardIssues.issues.forEach(async (issue) => {
-    const task = await Task.findByPk(issue.id);
-    const project = await Project.findByPk(issue.fields.project.id);
-    if (task || !project) {
-      return;
-    }
-    const newTask = await Task.create({ id: issue.id, description: issue.fields.summary, status: 'Active' });
-    if (project) {
-      await project.addTask(newTask);
-    }
-  });
-};
 
 export const getAll = async (userId: number) => {
   try {
@@ -62,7 +46,6 @@ export const getAll = async (userId: number) => {
     if (!user) {
       throw new HttpError('ServerError');
     }
-    await synchronizeProjects(user);
     const tasks = await Task.findAll({ include: [{ model: Project, include: [{ model: User }] }] });
     const filteredTasks = tasks.filter((task) =>
       hasAccessToAllProjects(user) ? task : hasAccessToProject(user, task.project),
@@ -312,3 +295,10 @@ export const checkCsvFile = async (file: any) => {
     throw new HttpError('BadRequest', 'Provided file is in bad format');
   }
 };
+function compareTask(taskFromProject: Task, taskFromJira: { description: string; id: number; }) {
+  if (taskFromProject.description === taskFromJira.description) {
+    return true;
+  }
+  return false;
+}
+

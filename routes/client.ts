@@ -74,14 +74,13 @@ clientsRouter.patch('/:id', authorize([ERoles.Admin]), async (req: Request, res:
 });
 
 
-clientsRouter.patch('/add-client/:id', authorize(), async (req: Request, res: Response) => {
+clientsRouter.patch('/add-client/:id', authorize(ERoles.Admin), async (req: Request, res: Response) => {
   const id: number = Number(req.params.id);
   const clientId: number = Number(req.body.clientId);
   try {
     const task = await clientController.addClientToProject(id, clientId);
     return res.status(200).send(task);
   } catch (error) {
-    console.log(error);
     if (error instanceof HttpError) {
       return res.status(EStatus[error.status]).json({ message: error.message });
     }

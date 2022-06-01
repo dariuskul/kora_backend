@@ -4,7 +4,9 @@ export const sendEmail = async (to: Array<string>, html: string, from = 'cidukas
   const transporter = createTransporter();
   try {
     await transporter.sendMail({ from, to: to[0], html, subject: subject || '' });
+    console.log('good', to[0])
   } catch (error) {
+    console.log('erroras', error);
     throw error;
   }
 }

@@ -1,5 +1,3 @@
-import { jira } from '../../config';
-import { EProjectStatus } from '../../constants/project';
 import sequelizeConnection from '../../db/config';
 import { CreateProjectDTO, IProjectFilters, UpdateProjectDTO } from '../../db/dto/project.dto';
 import Project from '../../db/models/project';
@@ -7,12 +5,8 @@ import Task from '../../db/models/task';
 import Timer from '../../db/models/timer';
 import User from '../../db/models/user';
 import { HttpError } from '../../types/error';
-import { checkIfCanAddWithoutRestrictions, compareProjects } from '../../utils/jira';
-import { checkStatus, hasAccessToProject, isUserAlreadyAdded } from '../../utils/projects';
+import { hasAccessToProject } from '../../utils/projects';
 import { calculateAverageTimeSpentOnProject, calculateAverageTimeSpentOnProjectByUser, calculateLongestTasksOnProject, calculateTimeSpentOnProject } from '../../utils/timer';
-import { hasAccessToAllProjects } from '../../utils/user';
-import { getAllBoards, getIssues } from '../integrations/jira/jira.service';
-import { synchronizeTasks } from '../task/task.service';
 
 export const create = async (userId: number, payload: CreateProjectDTO) => {
   if (!payload.name || !userId) {
@@ -69,26 +63,6 @@ export const remove = async (projectId: number) => {
   }
 };
 
-export const synchronizeProjects = async (user: User) => {
-  const boards = await getAllBoards();
-  boards.values.forEach(async (board) => {
-    const {
-      location: { projectId, projectName },
-    } = board;
-    const project = await Project.findByPk(projectId);
-    if (project) {
-      await compareProjects(board, project, user);
-      await synchronizeTasks(String(board.id));
-      return;
-    }
-    await Project.create({ id: projectId, name: projectName, budget: 0, isJiraProject: true });
-    const newProject = await Project.findByPk(projectId);
-    if (newProject && checkIfCanAddWithoutRestrictions(user)) {
-      newProject.addUsers(user);
-    }
-    await synchronizeTasks(String(board.id));
-  });
-};
 
 export const getAll = async (userId: number, filters: IProjectFilters) => {
   try {
@@ -96,7 +70,6 @@ export const getAll = async (userId: number, filters: IProjectFilters) => {
     if (!user) {
       return;
     }
-    await synchronizeProjects(user);
     const allProjects = await Project.findAll({
       include: [
         { model: User, as: 'users', attributes: ['id'] },
@@ -145,7 +118,6 @@ export const getAll = async (userId: number, filters: IProjectFilters) => {
 
     return projects;
   } catch (error) {
-    console.log(error);
     throw new HttpError('ServerError');
   }
 };
@@ -157,6 +129,7 @@ export const getById = async (id: number) => {
     const project = await Project.findByPk(id, {
       include: [{ model: Task, include: [{ model: Timer }] }, { model: User }],
     });
+    if (!project) throw new HttpError('NotFound', 'Project with id was not found');
     return project;
   } catch (error) {
     throw new HttpError('ServerError');
@@ -173,8 +146,7 @@ export const update = async (projectId: number, payload: UpdateProjectDTO) => {
     if (!project) {
       throw new HttpError('NotFound', 'Project not found');
     }
-
-    await project.update({ budget, isPublic, name, isArchived });
+    await project.update({ budget: budget || 0, isPublic: !!isPublic, name: name || project.name, isArchived: isArchived || project.isArchived });
 
     if (payload.users) {
       users?.map(async (user) => await project.addUsers(user.id));
@@ -187,6 +159,21 @@ export const update = async (projectId: number, payload: UpdateProjectDTO) => {
     throw new HttpError('ServerError');
   }
 };
+
+export const removeUserFromProject = async (projectId: number, userId: number) => {
+  try {
+    if (!projectId || !userId) throw new HttpError('BadRequest', 'Provide project id and user id');
+
+    const project = await Project.findByPk(projectId);
+    if (!project) {
+      throw new HttpError('NotFound', 'Project not found');
+    }
+    await project.removeUsers(userId);
+    return project;
+  } catch (error) {
+    throw new HttpError('ServerError');
+  }
+}
 
 export const getProjectStatisctics = async (projectId: number) => {
   try {

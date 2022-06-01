@@ -17,8 +17,13 @@ export function getProjectTime(project: Project, dateFrom: string, dateTo: strin
 }
 
 export function getTaskTime(item: Task, dateFrom: string, dateTo: string): any {
-  const filteredTimers = item.timers.filter(timer => moment(timer.startDate).diff(moment(dateFrom)) >= 0);
-  const taskTime = filteredTimers.reduce((acc, item) => acc + Number(getTimerTime(item, dateFrom, dateTo) || 0), 0);
+  // get timers between dates dateFrom and dateTo using moment
+  const timers = item.timers.filter((timer) => {
+    const startDate = moment(timer.startDate);
+    const endDate = moment(timer.endDate);
+    return startDate.isBetween(dateFrom, dateTo) || endDate.isBetween(dateFrom, dateTo);
+  });
+  const taskTime = timers.reduce((acc, item) => acc + Number(getTimerTime(item, dateFrom, dateTo) || 0), 0);
   return taskTime;
 }
 
@@ -43,14 +48,17 @@ export const getTasksTime = (tasks: Array<Task>, dateFrom: string, dateTo: strin
 
 // get total time tracked today for a user
 export const getTotalTimeTrackedToday = async (user: User): Promise<any> => {
-  const today = moment().format('YYYY-MM-DD');
   const timers = await Timer.findAll({
     include: [{ model: User, where: { id: user.id } }],
   });
-  // filter timers to get only today's timers
-  const todayTimers = timers.filter(timer => moment(timer.startDate).format('YYYY-MM-DD') === today);
-  const totalTimeTrackedToday = todayTimers.reduce((acc, item) => acc + Number(getTimeDuration(item.startDate, item.endDate) || 0), 0);
-  return totalTimeTrackedToday;
+  // get total time tracked this week for a user
+  const thisWeekTimers = timers.filter((timer) => {
+    const startDate = moment(timer.startDate);
+    const endDate = moment(timer.endDate);
+    return startDate.isBetween(moment().startOf('week'), moment().endOf('week'), null, '[]') || endDate.isBetween(moment().startOf('week'), moment().endOf('week'), null, '[]');
+  });
+  const totalTimeTrackedThisWeek = thisWeekTimers.reduce((acc, item) => acc + Number(getTimeDuration(item.startDate, item.endDate) || 0), 0);
+  return totalTimeTrackedThisWeek;
 };
 
 // get project names and total time tracked today for a user
@@ -80,6 +88,7 @@ export const sendDailySummary = async () => {
       try {
         const totalTimeTracked = formatToHoursAndMinutes(await getTotalTimeTrackedToday(item));
         const projects = await getProjectsAndTotalTimeTrackedToday(item);
+        console.log('test');
         await sendEmail([item.email], dailySummary({ totalTimeTracked, projects }), 'dailySummary', 'Kora daily summary');
       } catch (error) {
         throw error;

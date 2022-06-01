@@ -26,66 +26,71 @@ export const checkTimer = (timer: Timer) => {
   const diff = then.diff(now);
   const miliseconds = 30000 - diff;
   if (miliseconds > 0) {
-    console.log(miliseconds);
     return true;
   }
   return false;
 }
 
-export const getMedian = async (user: User) => {
+const getMedian = async (user: User) => {
   if (!user) return 0;
   const timers = await Timer.findAll({ include: [{ model: User, where: { id: user.id } }] });
   const times = timers.map(timer => {
     return moment(timer.endDate).diff(moment(timer.startDate), 'minutes');
   });
   const filteredTimes = times.filter(time => time > 0);
-  console.log(filteredTimes.sort((a, b) => a - b));
   // avergage of filtered times
   const average = filteredTimes.reduce((a, b) => a + b, 0) / filteredTimes.length;
-  const itemsWithDev = filteredTimes.map(item => {
+  // const itemsWithDev = filteredTimes.map(item => {
 
-    return { item: item, dev: Math.abs(item - average) };
-  })
-  // sort filtered times by deviation
-  const sorted = itemsWithDev.sort((a, b) => a.dev - b.dev);
-  // console.log('STUFF', sorted)
+  //   return { item: item, dev: Math.abs(item - average) };
+  // });
   const median = filteredTimes.sort((a, b) => a - b)[Math.floor(filteredTimes.length / 2)];
   return median;
 }
 
 
 const handleNotif = async (timer: Timer) => {
-  console.log('median', await getMedian(timer.user));
   if (timer.endDate || !timer.user) return false;
-  if (!timer.user.notifyAfter) return false;
-  const now = moment();
-  const startDateWithNotif = moment(timer.startDate).add(timer.user.notifyAfter, 'ms');
-  if (now.isAfter(startDateWithNotif)) {
-    return true;
+  if (timer.user.notifyAfter) {
+    // check if notifyAfter is greater than current timer time left 
+    const now = moment();
+    const then = moment(timer.startDate).add(timer.user.notifyAfter, 'ms');
+    const diff = then.diff(now, 'ms', true);
+    if (diff <= 0) {
+      return true;
+    }
+  } else {
+    // get median time and check if current timer time left is greater than median time
+    const median = await getMedian(timer.user);
+    const now = moment();
+    const then = moment(timer.startDate).add(median, 'minutes');
+    const diff = then.diff(now, 'ms', true);
+    if (diff <= 108000) {
+      return true;
+    }
   }
-  return false;
 }
 
 
-export const calculateValues = async () => {
+export const calculateValues = async (arrayOfNotifs: Array<any>, arrayOfWarnings: Array<any>) => {
   const timers = await Timer.findAll({ include: [{ model: User, as: 'user' }] });
+  const runningTimers = timers.filter(timer => !timer.endDate);
   if (!timers) return;
-  const showNotifsTo: any = [];
-  const showWarning: any = [];
-  timers.forEach(async (timer) => {
-    if (timer.endDate) return;
+  const showNotifsTo: Array<number> = [];
+  const showWarning: Array<number> = [];
+  const timersToEnd: Array<any> = [];
+  await runningTimers.forEach(async (timer) => {
     if (await handleNotif(timer)) {
-      showNotifsTo.push(timer.user.id);
-    } else {
-      if (timer.user?.notifyAfter && checkTimer(timer)) {
-        showWarning.push(timer.user.id);
-      }
+      arrayOfNotifs.push(timer.user.id);
+      console.log(showNotifsTo);
+      timer.update({ endDate: moment().format(), forcedStop: true });
     }
-    // if (!timer.endDate && isGreater(timer.startDate)) {
-    //   showNotifsTo.push(timer.user.id);
-    // }
+    if (timer.user?.notifyAfter && checkTimer(timer)) {
+      arrayOfWarnings.push(timer.user.id);
+    }
   });
-  return { showNotifsTo, showWarning };
+  // sleep for 1s 
+  await new Promise(resolve => setTimeout(resolve, 500));
 }
 
 export const getRealTimeData = async () => {
@@ -99,4 +104,8 @@ export const getRealTimeData = async () => {
     ]
   });
   return timers;
+}
+
+export const calculateData = async () => {
+  // await calculateValues();
 }
