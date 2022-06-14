@@ -3,13 +3,9 @@ import Project from '../db/models/project';
 import Task from '../db/models/task';
 import Timer from '../db/models/timer';
 import { formatToHoursAndMinutes, getTimeDuration } from './timer';
-import PDFDocument from 'pdfkit-table';
-import fs from 'fs';
-import { Response } from 'express';
 import User from '../db/models/user';
-import { sendEmail } from '../others/templates/email';
-import { Op } from 'sequelize';
 import { dailySummary } from '../others/templates/dailySummary';
+import { sendEmail } from '../others/templates/email';
 
 export function getProjectTime(project: Project, dateFrom: string, dateTo: string): any {
   const projectTime = project.tasks.reduce((acc, item) => acc + Number(getTaskTime(item, dateFrom, dateTo) || 0), 0);
@@ -17,13 +13,12 @@ export function getProjectTime(project: Project, dateFrom: string, dateTo: strin
 }
 
 export function getTaskTime(item: Task, dateFrom: string, dateTo: string): any {
-  // get timers between dates dateFrom and dateTo using moment
-  const timers = item.timers.filter((timer) => {
-    const startDate = moment(timer.startDate);
-    const endDate = moment(timer.endDate);
-    return startDate.isBetween(dateFrom, dateTo) || endDate.isBetween(dateFrom, dateTo);
-  });
-  const taskTime = timers.reduce((acc, item) => acc + Number(getTimerTime(item, dateFrom, dateTo) || 0), 0);
+  // get task time from timer
+  const timers = item.timers.filter(timer => {
+    return timer.startDate >= dateFrom && timer.startDate <= dateTo;
+  }
+  );
+  const taskTime = timers.reduce((acc, timer) => acc + Number(getTimeDuration(timer.startDate, timer.endDate) || 0), 0);
   return taskTime;
 }
 
@@ -67,11 +62,14 @@ export const getProjectsAndTotalTimeTrackedToday = async (user: User): Promise<a
   const projects = await Project.findAll({
     include: [{ model: User, where: { id: user.id } }, { model: Task, as: 'tasks', include: [{ model: Timer, as: 'timers' }] }],
   });
+  // get 7 days ago
+  const sevenDaysAgo = moment(today).subtract(7, 'days').format('YYYY-MM-DD');
+  console.log(sevenDaysAgo);
   const projectTime = projects.map((item) => {
     return {
       projectInfo: {
         name: item.name,
-        totalProjectTime: formatToHoursAndMinutes(getProjectTime(item, today, today)),
+        totalProjectTime: formatToHoursAndMinutes(getProjectTime(item, sevenDaysAgo, today)),
       },
     };
   });
@@ -88,7 +86,8 @@ export const sendDailySummary = async () => {
       try {
         const totalTimeTracked = formatToHoursAndMinutes(await getTotalTimeTrackedToday(item));
         const projects = await getProjectsAndTotalTimeTrackedToday(item);
-        await sendEmail([item.email], dailySummary({ totalTimeTracked, projects }), 'dailySummary', 'Kora daily summary');
+        console.log(projects);
+        await sendEmail([item.email], dailySummary({ totalTimeTracked, projects }), 'weeklySummary', 'Kora weekly summary');
       } catch (error) {
         throw error;
       }

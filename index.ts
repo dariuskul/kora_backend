@@ -32,7 +32,7 @@ const task = new AsyncTask(
 
 const task2 = new AsyncTask('stop timers', () => calculateData(), (err: Error) => { /* handle error here */ });
 
-const job = new SimpleIntervalJob({ seconds: 99999 }, task)
+const job = new SimpleIntervalJob({ days: 7 }, task)
 const job2 = new SimpleIntervalJob({ seconds: 1 }, task2)
 
 scheduler.addSimpleIntervalJob(job)
