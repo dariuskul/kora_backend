@@ -6,6 +6,8 @@
   "scripts": {
     "tsc": "nodemon --exec npx ts-node ./index.ts",
     "postinstall": "tsc",
+    "production": "tsc --build",
+    "runProd": "nodemon --exec npx ts-node ./index.ts NODE_ENV=production",
     "start": "./node_modules/.bin/ts-node index.ts",
     "test": "jest --testTimeout=5000000 --coverage"
   },

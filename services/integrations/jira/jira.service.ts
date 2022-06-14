@@ -42,7 +42,6 @@ export const synchronizeProjects = async () => {
   updatedProjects.forEach(async (board) => {
     try {
       const project = await Project.findByPk(board.location.projectId.toString());
-      console.log(project);
       if (project) {
         await project.update({
           id: board.location.projectId,
@@ -62,15 +61,19 @@ export const synchronizeProjects = async () => {
 
 export const synchronizeTasks = async (boardId: number) => {
   const issues = await getIssues(String(boardId));
-  const tasks = issues.issues.map((issue) => {
+  const tasks = issues.issues.map(async (issue) => {
+    const response = await jira.getIssue(String(issue.id));
+    const taskUrl = response.self.substring(0, response.self.indexOf('/rest')) + '/browse/' + response.key;
     return {
       description: issue.fields.summary,
       projectId: issue.fields.project.id,
       id: issue.id,
       status: 'Active',
+      taskLink: taskUrl,
     };
   });
-  tasks.forEach(async (task) => {
+  const tasksArray = await Promise.all(tasks);
+  tasksArray.forEach(async (task) => {
     const existingTask = await Task.findOne({
       where: {
         id: task.id,
@@ -84,7 +87,7 @@ export const synchronizeTasks = async (boardId: number) => {
       const newTask = await Task.create(task);
       await project.addTask(newTask);
     } else {
-      await existingTask.update({ description: task.description });
+      await existingTask.update({ description: task.description, taskLink: task.taskLink });
       const project = await Project.findByPk(task.projectId);
       if (!project) {
         return;

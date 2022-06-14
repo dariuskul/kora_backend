@@ -8,6 +8,7 @@ export interface TaskAttributes {
   id: number;
   description: string;
   status: string;
+  taskLink?: string;
 }
 
 export interface TaskInput extends Optional<TaskAttributes, 'id'> { }
@@ -38,6 +39,9 @@ class Task extends Model<TaskInput, TaskInput> {
 
   @Column
   description!: string;
+
+  @Column({ defaultValue: null, allowNull: true })
+  taskLink!: string;
 
   @Column({ defaultValue: 'Active' })
   status!: string;

@@ -93,8 +93,9 @@ export const formatToHoursAndMinutes = (time: number) => {
   var dur = moment.duration(time, 'ms');
   var hours = Math.floor(dur.asHours());
   var mins = Math.floor(dur.asMinutes()) - hours * 60;
+  var seconds = Math.floor(dur.asSeconds()) - hours * 3600 - mins * 60;
 
-  var result = `${hours < 10 ? `0${hours}` : hours}` + ":" + `${mins < 10 ? `0${mins}` : mins}`;
+  var result = `${hours < 10 ? `0${hours}` : hours}` + ":" + `${mins < 10 ? `0${mins}` : mins}:${seconds < 10 ? `0${seconds}` : seconds}`;
   return result;
 }
 

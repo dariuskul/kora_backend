@@ -53,7 +53,6 @@ const getDayTimeSpent = (timers: Timer[], date: string) => {
     return moment(timer.startDate).format('YYYY-MM-DD') === date;
   });
   const totalTime = timersByDate.reduce((acc, timer) => {
-    console.log(getTimeDurationBetweenDates(timer.startDate, timer.endDate), timer.startDate, timer.endDate);
     return acc + getTimeDurationBetweenDates(timer.startDate, timer.endDate);
   }, 0);
   return totalTime;

@@ -38,13 +38,10 @@ const getMedian = async (user: User) => {
     return moment(timer.endDate).diff(moment(timer.startDate), 'minutes');
   });
   const filteredTimes = times.filter(time => time > 0);
-  // avergage of filtered times
+  // get average of all times using standard deviation
   const average = filteredTimes.reduce((a, b) => a + b, 0) / filteredTimes.length;
-  // const itemsWithDev = filteredTimes.map(item => {
-
-  //   return { item: item, dev: Math.abs(item - average) };
-  // });
-  const median = filteredTimes.sort((a, b) => a - b)[Math.floor(filteredTimes.length / 2)];
+  const standardDeviation = Math.sqrt(filteredTimes.reduce((a, b) => a + Math.pow(b - average, 2), 0) / filteredTimes.length);
+  const median = average + standardDeviation;
   return median;
 }
 
@@ -55,34 +52,36 @@ const handleNotif = async (timer: Timer) => {
     // check if notifyAfter is greater than current timer time left 
     const now = moment();
     const then = moment(timer.startDate).add(timer.user.notifyAfter, 'ms');
+    const timeLeft = moment(then).diff(now, 'milliseconds');
     const diff = then.diff(now, 'ms', true);
     if (diff <= 0) {
       return true;
     }
+    return timeLeft;
   } else {
     // get median time and check if current timer time left is greater than median time
     const median = await getMedian(timer.user);
     const now = moment();
     const then = moment(timer.startDate).add(median, 'minutes');
     const diff = then.diff(now, 'ms', true);
+    const timeLeft = moment(then).diff(now, 'milliseconds');
     if (diff <= 108000) {
       return true;
     }
+    return timeLeft;
   }
 }
 
 
-export const calculateValues = async (arrayOfNotifs: Array<any>, arrayOfWarnings: Array<any>) => {
+export const calculateValues = async (arrayOfNotifs: Array<any>, arrayOfWarnings: Array<any>, howLongUntilStop: Array<any>) => {
   const timers = await Timer.findAll({ include: [{ model: User, as: 'user' }] });
   const runningTimers = timers.filter(timer => !timer.endDate);
   if (!timers) return;
-  const showNotifsTo: Array<number> = [];
-  const showWarning: Array<number> = [];
-  const timersToEnd: Array<any> = [];
   await runningTimers.forEach(async (timer) => {
-    if (await handleNotif(timer)) {
+    const response = await handleNotif(timer);
+    howLongUntilStop.push(response);
+    if (typeof response !== 'number' && response) {
       arrayOfNotifs.push(timer.user.id);
-      console.log(showNotifsTo);
       timer.update({ endDate: moment().format(), forcedStop: true });
     }
     if (timer.user?.notifyAfter && checkTimer(timer)) {

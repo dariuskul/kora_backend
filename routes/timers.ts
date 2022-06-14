@@ -6,7 +6,6 @@ import { authorize } from '../middlewares/authorize';
 import { writeDataToEventSource } from '../services/internal/eventSource';
 import { calculateValues } from '../services/internal/scheduler';
 import { HttpError } from '../types/error';
-import { Chain } from 'repeat'
 
 const timerRouter = Router();
 
@@ -102,29 +101,40 @@ timerRouter.get('/synchronize', authorize(), async (req: Request, res: Response)
   }
 })
 
+const port = process.env.PORT || 8888;
+const serverName = process.env.SERVER_NAME || "sample";
+let i = 0;
+function send(res) {
+  res.write("data: " + `hello from ${serverName} ---- [${i++}]\n\n`);
+
+
+  setTimeout(() => send(res), 1000);
+}
+const sendEvent = async (_req: Request, res: Response) => {
+  let arrayOfNotifs = [];
+  let howLongUntilStop = [];
+  await calculateValues(arrayOfNotifs, [], howLongUntilStop);
+  writeDataToEventSource(res, JSON.stringify({ showNotifsTo: arrayOfNotifs, willStop: howLongUntilStop }));
+  setTimeout(() => sendEvent(_req, res), 1000);
+};
+
 timerRouter.get('/events', authorize(), async (req: Request, res: Response) => {
-  let isFinished = false;
-  let chain = new Chain();
-  const sendEvent = (_req: Request, res: Response) => {
-    res.writeHead(200, {
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-      'Content-Type': 'text/event-stream',
-    });
-    const test = async () => {
-      let arrayOfNotifs = [];
-      // let showWarnings = [];
-      await calculateValues(arrayOfNotifs, []);
-      writeDataToEventSource(res, JSON.stringify({ showNotifsTo: arrayOfNotifs }));
-    }
-    chain.every(1000).do(test);
-  };
-  // 1 sec to milliseconds 
-  if (req.headers.accept === 'text/event-stream') {
-    sendEvent(req, res);
-  } else {
-    res.json({ message: 'Ok' });
-  }
+  res.setHeader("Content-Type", "text/event-stream");
+  // let isFinished = false;
+  // let chain = new Chain();
+  // const sendEvent = async (_req: Request, res: Response) => {
+  //   res.writeHead(200, {
+  //     'Cache-Control': 'no-cache',
+  //     Connection: 'keep-alive',
+  //     'Content-Type': 'text/event-stream',
+  //   });
+  //   let arrayOfNotifs = [];
+  //   await calculateValues(arrayOfNotifs, []);
+  //   writeDataToEventSource(res, JSON.stringify({ showNotifsTo: arrayOfNotifs }));
+  // };
+  // setTimeout(async () => sendEvent(req, res), 1);
+
+  await sendEvent(req, res);
 })
 
 // write a function which executes a function fully and then after 5 seconds repeats the function 

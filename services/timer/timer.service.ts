@@ -136,6 +136,8 @@ const getWeeklyEntries = async (userId) => {
     });
     weeklyEntry.projectEntries = projectEntriesByDay.reverse();
     weeklyEntries.push(weeklyEntry);
+    // get each week's total time
+
   });
   return weeklyEntries.reverse();
 };
